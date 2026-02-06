@@ -30,27 +30,31 @@
         </div>
         
         <nav class="p-3 mt-4">
-            <a href="dashboard.html" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <a href="dashboard.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-home w-5 mr-3"></i>
                 <span class="font-medium">Dashboard</span>
             </a>
-            <a href="products.html" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <a href="products.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-box w-5 mr-3"></i>
                 <span class="font-medium">Products</span>
             </a>
-            <a href="purchases.html" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <a href="companies.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+                <i class="fas fa-box w-5 mr-3"></i>
+                <span class="font-medium">Companies</span>
+            </a>
+            <a href="purchases.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-shopping-cart w-5 mr-3"></i>
                 <span class="font-medium">Purchases</span>
             </a>
-            <a href="sales.html" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <a href="sales.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-cash-register w-5 mr-3"></i>
                 <span class="font-medium">Sales</span>
             </a>
-            <a href="staff.html" class="flex items-center px-4 py-3 mb-2 text-white bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg shadow-indigo-500/30">
+            <a href="staff.php" class="flex items-center px-4 py-3 mb-2 text-white bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg shadow-indigo-500/30">
                 <i class="fas fa-users w-5 mr-3"></i>
                 <span class="font-medium">Staff Management</span>
             </a>
-            <a href="reports.html" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <a href="reports.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-chart-line w-5 mr-3"></i>
                 <span class="font-medium">Reports</span>
             </a>

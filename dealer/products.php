@@ -1,3 +1,17 @@
+<?php
+    require '../includes/scripts/connection.php';  
+    session_start();
+    if(isset($_SESSION['rgt_logedin_user_id']) && (trim ($_SESSION['rgt_logedin_user_id']) !== '')){
+        $user_id = $_SESSION['rgt_logedin_user_id'];
+        $user_role = $_SESSION['rgt_logedin_user_role'];
+        if($user_role != "ADMIN"){
+            header("Location: ../404.php");
+        }
+    }else{
+        header("Location: ../sign-in.php");
+    }
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,27 +44,31 @@
         </div>
         
         <nav class="p-3 mt-4">
-            <a href="dashboard.html" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <a href="dashboard.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-home w-5 mr-3"></i>
                 <span class="font-medium">Dashboard</span>
             </a>
-            <a href="products.html" class="flex items-center px-4 py-3 mb-2 text-white bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg shadow-indigo-500/30">
+            <a href="products.php" class="flex items-center px-4 py-3 mb-2 text-white bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg shadow-indigo-500/30">
                 <i class="fas fa-box w-5 mr-3"></i>
                 <span class="font-medium">Products</span>
             </a>
-            <a href="purchases.html" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <a href="companies.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+                <i class="fas fa-box w-5 mr-3"></i>
+                <span class="font-medium">Companies</span>
+            </a>
+            <a href="purchases.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-shopping-cart w-5 mr-3"></i>
                 <span class="font-medium">Purchases</span>
             </a>
-            <a href="sales.html" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <a href="sales.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-cash-register w-5 mr-3"></i>
                 <span class="font-medium">Sales</span>
             </a>
-            <a href="staff.html" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <a href="staff.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-users w-5 mr-3"></i>
                 <span class="font-medium">Staff Management</span>
             </a>
-            <a href="reports.html" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <a href="reports.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-chart-line w-5 mr-3"></i>
                 <span class="font-medium">Reports</span>
             </a>
@@ -95,11 +113,13 @@
                     <table class="w-full">
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">No.</th>
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">dealer_id</th>
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Company Name</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Name</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Purchase Price</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Selling Price</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Current Stock</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Base Price</th>
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">selling Price</th>
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">current stock</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -107,98 +127,23 @@
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="py-4 px-6 text-sm font-medium text-gray-900">Rice (1kg)</td>
                                 <td class="py-4 px-6 text-sm text-gray-900">₹50.00</td>
+                                <td class="py-4 px-6 text-sm text-gray-900">Test</td>
                                 <td class="py-4 px-6 text-sm text-gray-900">₹65.00</td>
                                 <td class="py-4 px-6 text-sm text-gray-900">150</td>
-                                <td class="py-4 px-6">
-                                    <span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">Active</span>
-                                </td>
-                                <td class="py-4 px-6">
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="openEditProductModal()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <button class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
-                                            <i class="fas fa-ban"></i> Disable
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">Wheat Flour (1kg)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹45.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹58.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">120</td>
-                                <td class="py-4 px-6">
-                                    <span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">Active</span>
-                                </td>
+                                <td class="py-4 px-6 text-sm text-gray-900">150</td>
+                                <td class="py-4 px-6 text-sm text-gray-900">150</td>
                                 <td class="py-4 px-6">
                                     <div class="flex items-center gap-2">
                                         <button onclick="openEditProductModal()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
                                         <button class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
-                                            <i class="fas fa-ban"></i> Disable
+                                            <i class="fas fa-eye"></i> view
                                         </button>
                                     </div>
                                 </td>
                             </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">Sugar (1kg)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹42.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹55.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">80</td>
-                                <td class="py-4 px-6">
-                                    <span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">Active</span>
-                                </td>
-                                <td class="py-4 px-6">
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="openEditProductModal()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <button class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
-                                            <i class="fas fa-ban"></i> Disable
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">Cooking Oil (1L)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹120.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹145.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">65</td>
-                                <td class="py-4 px-6">
-                                    <span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">Active</span>
-                                </td>
-                                <td class="py-4 px-6">
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="openEditProductModal()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <button class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
-                                            <i class="fas fa-ban"></i> Disable
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">Tea Powder (250g)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹85.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹105.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">45</td>
-                                <td class="py-4 px-6">
-                                    <span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">Active</span>
-                                </td>
-                                <td class="py-4 px-6">
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="openEditProductModal()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <button class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
-                                            <i class="fas fa-ban"></i> Disable
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            
                         </tbody>
                     </table>
                 </div>
@@ -220,25 +165,39 @@
             <form action="add_product.php" method="POST" class="p-6">
                 <div class="space-y-5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
                         <input type="text" name="product_name" required 
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                     </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                        <select name="company_id" required 
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            <option value="">Select a company</option>
+                            <?php
+                                $company_query = mysqli_query($conn, "SELECT id, company_name FROM companies WHERE dealer_id = {$_SESSION['rgt_logedin_user_dealer_id']}");
+                                while($company = mysqli_fetch_assoc($company_query)){
+                                    echo '<option value="'.$company['id'].'">'.$company['company_name'].'</option>';
+                                }
+                            ?>
+                        </select>
+                    </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Purchase Price (₹) *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Purchase Price (₹)</label>
                         <input type="number" name="purchase_price" step="0.01" min="0" required 
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Selling Price (₹) *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Selling Price (₹)</label>
                         <input type="number" name="selling_price" step="0.01" min="0" required 
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Initial Quantity *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Initial Quantity</label>
                         <input type="number" name="initial_quantity" min="0" required 
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                     </div>

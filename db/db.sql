@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 03, 2026 at 02:21 PM
+-- Generation Time: Feb 06, 2026 at 03:01 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -87,6 +87,22 @@ CREATE TABLE `products` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `product_price_history`
+--
+
+CREATE TABLE `product_price_history` (
+  `id` bigint(20) NOT NULL,
+  `dealer_id` bigint(20) NOT NULL,
+  `product_id` bigint(20) NOT NULL,
+  `base_price` decimal(10,2) NOT NULL,
+  `selling_price` decimal(10,2) NOT NULL,
+  `effective_from` date NOT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `purchase_orders`
 --
 
@@ -154,7 +170,8 @@ CREATE TABLE `users` (
   `name` varchar(255) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
   `password` varchar(255) DEFAULT NULL,
-  `role` enum('ADMIN','STAFF') DEFAULT NULL
+  `role` enum('ADMIN','STAFF') DEFAULT NULL,
+  `is_verified` tinyint(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -193,6 +210,15 @@ ALTER TABLE `products`
   ADD KEY `company_id` (`company_id`);
 
 --
+-- Indexes for table `product_price_history`
+--
+ALTER TABLE `product_price_history`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `dealer_id` (`dealer_id`),
+  ADD KEY `product_id` (`product_id`),
+  ADD KEY `effective_from` (`effective_from`);
+
+--
 -- Indexes for table `purchase_orders`
 --
 ALTER TABLE `purchase_orders`
@@ -228,6 +254,7 @@ ALTER TABLE `sale_items`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
   ADD KEY `dealer_id` (`dealer_id`);
 
 --
@@ -256,6 +283,12 @@ ALTER TABLE `dealer`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `product_price_history`
+--
+ALTER TABLE `product_price_history`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
@@ -312,6 +345,13 @@ ALTER TABLE `company_transactions`
 ALTER TABLE `products`
   ADD CONSTRAINT `products_ibfk_1` FOREIGN KEY (`dealer_id`) REFERENCES `dealer` (`id`),
   ADD CONSTRAINT `products_ibfk_2` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`);
+
+--
+-- Constraints for table `product_price_history`
+--
+ALTER TABLE `product_price_history`
+  ADD CONSTRAINT `product_price_history_ibfk_1` FOREIGN KEY (`dealer_id`) REFERENCES `dealer` (`id`),
+  ADD CONSTRAINT `product_price_history_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
 
 --
 -- Constraints for table `purchase_orders`

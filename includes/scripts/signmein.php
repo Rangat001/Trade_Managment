@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       $userId = $row["id"];
       $user_role = $row["role"];
       $user_dealer_id = $row["dealer_id"];
-      $user_name = $row["username"];
+      $user_name = $row["name"];
      
       // Verify the provided password against the stored hashed password
       if (password_verify($loginPassword, $hashedPasswordFromDB)) {
@@ -38,16 +38,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['rgt_logedin_user_id'] = $row["id"];
             $_SESSION['rgt_logedin_user_role'] = $row["role"];
             $_SESSION['rgt_logedin_user_dealer_id'] = $row["dealer_id"];
-            $_SESSION['rgt_logedin_user_name'] = $row["username"];
-            header("Location: ../../index.php");
+            $_SESSION['rgt_logedin_user_name'] = $user_name;
+            //                                If Admin come redrect to Dashboard 
+            if($user_role === "ADMIN"){
+              // echo '<pre>';
+              // print_r($row);
+              // echo '</pre>';
+              header("Location: ../../dealer/dashboard.php");
+            }else{
+              header("Location: ../../index.php");
+            }
+              
       }   
     }else{
         // Password is incorrect
         $_SESSION['rgt_error_message'] = "Incorrect password.";
         header("Location: ../../auth/sign-in.php");
         echo "eror";
-        
-
       }
 
     }else{
