@@ -23,6 +23,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       $hashedPasswordFromDB = $row["password"];
       $isVerified = $row["is_verified"];
       $userId = $row["id"];
+      $user_role = $row["role"];
+      $user_dealer_id = $row["dealer_id"];
+      $user_name = $row["username"];
      
       // Verify the provided password against the stored hashed password
       if (password_verify($loginPassword, $hashedPasswordFromDB)) {
@@ -33,12 +36,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           if ($isVerified == 1) {
             // Password is correct and the user is verified
             $_SESSION['rgt_logedin_user_id'] = $row["id"];
+            $_SESSION['rgt_logedin_user_role'] = $row["role"];
+            $_SESSION['rgt_logedin_user_dealer_id'] = $row["dealer_id"];
+            $_SESSION['rgt_logedin_user_name'] = $row["username"];
             header("Location: ../../index.php");
       }   
     }else{
         // Password is incorrect
         $_SESSION['rgt_error_message'] = "Incorrect password.";
-        header("Location: ../../sign-in.php");
+        header("Location: ../../auth/sign-in.php");
         echo "eror";
         
 
@@ -47,7 +53,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }else{
       // username not found in the database
       $_SESSION['rgt_error_message'] = "username is  not found.";
-      header("Location: ../../sign-in.php");
+      header("Location: ../../auth/sign-in.php");
   }
   $conn->close();
 }
