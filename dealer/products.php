@@ -123,28 +123,49 @@
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">Rice (1kg)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹50.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">Test</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹65.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">150</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">150</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">150</td>
-                                <td class="py-4 px-6">
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="openEditProductModal()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <button class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
-                                            <i class="fas fa-eye"></i> view
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                        </tbody>
+                            <tbody class="divide-y divide-gray-200">
+                                <?php
+                                    $products_query = "SELECT p.*, c.company_name 
+                                                      FROM products p 
+                                                      LEFT JOIN companies c ON p.company_id = c.id 
+                                                      WHERE p.dealer_id = {$_SESSION['rgt_logedin_user_dealer_id']}";
+                                    $result = mysqli_query($conn, $products_query);
+
+                                    if(mysqli_num_rows($result) > 0){
+                                        while($row = mysqli_fetch_assoc($result)){
+                                            ?>
+                                            <tr class="hover:bg-gray-50 transition-colors">
+                                                <td class="py-4 px-6 text-sm font-medium text-gray-900"><?php echo $row['id']; ?></td>
+                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['dealer_id']; ?></td>
+                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['company_name']; ?></td>
+                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['product_name']; ?></td>
+                                                <td class="py-4 px-6 text-sm text-gray-900">₹<?php echo number_format($row['base_price'], 2); ?></td>
+                                                <td class="py-4 px-6 text-sm text-gray-900">₹<?php echo number_format($row['selling_price'], 2); ?></td>
+                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['current_stock']; ?></td>
+                                                <td class="py-4 px-6">
+                                                    <div class="flex items-center gap-2">
+                                                        <button onclick="openEditProductModal(<?php echo $row['id']; ?>, '<?php echo htmlspecialchars($row['product_name'], ENT_QUOTES); ?>', <?php echo $row['base_price']; ?>, <?php echo $row['selling_price']; ?>, <?php echo $row['current_stock']; ?>)" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </button>
+                                                        <button onclick="window.location.href='price_history.php?id=<?php echo $row['id']; ?>'" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-lg transition-colors">
+                                                            <i class="fas fa-chart-line"></i> Price History
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <?php
+                                        }
+                                    } else {
+                                        ?>
+                                        <tr>
+                                            <td colspan="8" class="py-8 px-6 text-center text-gray-500">
+                                                No products found. Click "Add Product" to get started.
+                                            </td>
+                                        </tr>
+                                        <?php
+                                    }
+                                ?>
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -217,7 +238,7 @@
         </div>
     </div>
 
-    <!-- Edit Product Modal -->
+                                                                <!-- Edit Product Modal -->
     <div id="editProductModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between px-6 py-5 border-b border-gray-200">
@@ -227,47 +248,47 @@
                 </button>
             </div>
             
-            <form action="edit_product.php" method="POST" class="p-6">
-                <input type="hidden" name="product_id" value="1">
-                
-                <div class="space-y-5">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
-                        <input type="text" name="product_name" value="Rice (1kg)" required 
-                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                <form action="edit_product.php" method="POST" class="p-6">
+                    <input type="hidden" name="product_id" id="edit_product_id" value="">
+
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
+                            <input type="text" name="product_name" id="edit_product_name" value="" required 
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Purchase Price (₹) *</label>
+                            <input type="number" name="purchase_price" id="edit_purchase_price" value="" step="0.01" min="0" required 
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Selling Price (₹) *</label>
+                            <input type="number" name="selling_price" id="edit_selling_price" value="" step="0.01" min="0" required 
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Current Stock</label>
+                            <input type="number" id="edit_current_stock" value="" disabled 
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed">
+                            <p class="mt-1 text-xs text-gray-500">Stock can only be updated via Purchases and Sales</p>
+                        </div>
                     </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Purchase Price (₹) *</label>
-                        <input type="number" name="purchase_price" value="50.00" step="0.01" min="0" required 
-                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+
+                    <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200">
+                        <button type="button" onclick="closeEditProductModal()" 
+                                class="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-lg shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all">
+                            Update Product
+                        </button>
                     </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Selling Price (₹) *</label>
-                        <input type="number" name="selling_price" value="65.00" step="0.01" min="0" required 
-                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Current Stock</label>
-                        <input type="number" value="150" disabled 
-                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed">
-                        <p class="mt-1 text-xs text-gray-500">Stock can only be updated via Purchases and Sales</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200">
-                    <button type="button" onclick="closeEditProductModal()" 
-                            class="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg transition-colors">
-                        Cancel
-                    </button>
-                    <button type="submit" 
-                            class="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-lg shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all">
-                        Update Product
-                    </button>
-                </div>
-            </form>
+                </form>
         </div>
     </div>
 
@@ -281,7 +302,15 @@
             document.getElementById('addProductModal').classList.add('hidden');
         }
         
-        function openEditProductModal() {
+        function openEditProductModal(productId, productName, purchasePrice, sellingPrice, currentStock) {
+            // Populate form fields with current product data
+            document.getElementById('edit_product_id').value = productId;
+            document.getElementById('edit_product_name').value = productName;
+            document.getElementById('edit_purchase_price').value = purchasePrice;
+            document.getElementById('edit_selling_price').value = sellingPrice;
+            document.getElementById('edit_current_stock').value = currentStock;
+
+            // Show the modal
             document.getElementById('editProductModal').classList.remove('hidden');
         }
         
