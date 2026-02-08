@@ -1,3 +1,17 @@
+<?php
+    require '../includes/scripts/connection.php';  
+    session_start();
+    if(isset($_SESSION['rgt_logedin_user_id']) && (trim ($_SESSION['rgt_logedin_user_id']) !== '')){
+        $user_id = $_SESSION['rgt_logedin_user_id'];
+        $user_role = $_SESSION['rgt_logedin_user_role'];
+        if($user_role != "ADMIN"){
+            header("Location: ../404.php");
+        }
+    }else{
+        header("Location: ../auth/sign-in.php");
+    }
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -87,7 +101,7 @@
             <!-- Page Header -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h2 class="text-2xl font-semibold text-gray-900">Sales Management</h2>
-                <button onclick="openAddSaleModal()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all">
+                <button onclick="window.location.href='sales_entry.php'" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all">
                     <i class="fas fa-plus"></i>
                     <span>New Sale</span>
                 </button>
@@ -99,47 +113,95 @@
                     <table class="w-full">
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Invoice #</th>
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">No.</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Billing type</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quantity</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Profit</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sold By</th>
+                                
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
+                            <?php
+                                $dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
+
+                                $sql = "
+                                    SELECT 
+                                        s.id AS sale_id,
+                                        s.sale_date,
+                                        s.billing_type,
+                                        si.quantity,
+                                        si.selling_price,
+                                        si.base_price,
+                                        (si.quantity * si.selling_price) AS line_total,
+                                        ((si.selling_price - si.base_price) * si.quantity) AS line_profit,
+                                        p.product_name
+                                    FROM sales s
+                                    JOIN sale_items si ON si.sale_id = s.id
+                                    JOIN products p ON p.id = si.product_id
+                                    WHERE s.dealer_id = ?
+                                    ORDER BY s.sale_date DESC, s.id DESC
+                                ";
+
+                                $stmt = $conn->prepare($sql);
+                                $stmt->bind_param("i", $dealer_id);
+                                $stmt->execute();
+                                $result = $stmt->get_result();
+                                $sr = 1;
+                                while ($row = $result->fetch_assoc()): 
+                            ?>
                             <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">INV-1245</td>
-                                <td class="py-4 px-6 text-sm text-gray-500">Feb 5, 2:30 PM</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">Rice (1kg)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">10</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹65.00</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">₹650.00</td>
-                                <td class="py-4 px-6 text-sm font-medium text-green-600">₹150.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-500">Dealer Admin</td>
+                                <!-- No. -->
+                                <td class="py-4 px-6 text-sm font-medium text-gray-900">
+                                    <?= $sr++ ?>
+                                </td>
+
+                                <!-- Date -->
+                                <td class="py-4 px-6 text-sm text-gray-500">
+                                    <?= date("d/m/Y", strtotime($row['sale_date'])) ?>
+                                </td>
+
+                                <!-- Billing Type -->
+                                <td class="py-4 px-6 text-sm text-gray-900">
+                                    <?= htmlspecialchars($row['billing_type']) ?>
+                                </td>
+
+                                <!-- Product -->
+                                <td class="py-4 px-6 text-sm text-gray-900">
+                                    <?= htmlspecialchars($row['product_name']) ?>
+                                </td>
+
+                                <!-- Quantity -->
+                                <td class="py-4 px-6 text-sm text-gray-900">
+                                    <?= $row['quantity'] ?>
+                                </td>
+
+                                <!-- Price -->
+                                <td class="py-4 px-6 text-sm text-gray-900">
+                                    ₹<?= number_format($row['selling_price'], 2) ?>
+                                </td>
+
+                                <!-- Total -->
+                                <td class="py-4 px-6 text-sm font-medium text-gray-900">
+                                    ₹<?= number_format($row['line_total'], 2) ?>
+                                </td>
+
+                                <!-- Profit -->
+                                <td class="py-4 px-6 text-sm font-medium 
+                                    <?= $row['line_profit'] >= 0 ? 'text-green-600' : 'text-red-600' ?>">
+                                    ₹<?= number_format($row['line_profit'], 2) ?>
+                                </td>
+
+                                <!-- Action / User
+                                <td class="py-4 px-6 text-sm text-gray-500">
+                                    Dealer
+                                </td> -->
                             </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">INV-1244</td>
-                                <td class="py-4 px-6 text-sm text-gray-500">Feb 5, 1:15 PM</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">Cooking Oil (1L)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">3</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹145.00</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">₹435.00</td>
-                                <td class="py-4 px-6 text-sm font-medium text-green-600">₹75.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-500">Rajesh Kumar</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">INV-1243</td>
-                                <td class="py-4 px-6 text-sm text-gray-500">Feb 5, 11:45 AM</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">Sugar (1kg)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">5</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹55.00</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">₹275.00</td>
-                                <td class="py-4 px-6 text-sm font-medium text-green-600">₹65.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-500">Dealer Admin</td>
-                            </tr>
+                        <?php endwhile; ?>
+                            
                         </tbody>
                     </table>
                 </div>
