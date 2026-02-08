@@ -118,6 +118,7 @@
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Owner Name</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Balance</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
 
                             </tr>
@@ -125,7 +126,36 @@
                         <tbody class="divide-y divide-gray-200">
                             <?php
                                 
-                                $result = mysqli_query($conn, "SELECT * FROM companies where dealer_id = {$_SESSION['rgt_logedin_user_dealer_id']}");
+                                // $result = mysqli_query($conn, "SELECT * FROM companies where dealer_id = {$_SESSION['rgt_logedin_user_dealer_id']}");
+                                $dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
+                                $result = mysqli_query($conn, "
+                                    SELECT 
+                                        c.*,
+                            
+                                        (
+                                            COALESCE((
+                                                SELECT SUM(ct.amount)
+                                                FROM company_transactions ct
+                                                WHERE ct.company_id = c.id
+                                                AND ct.dealer_id = $dealer_id
+                                                AND ct.type = 'DEBIT'
+                                            ), 0)
+                            
+                                            -
+                            
+                                            COALESCE((
+                                                SELECT SUM(poi.total_price)
+                                                FROM purchase_order_items poi
+                                                JOIN purchase_orders po ON po.id = poi.order_id
+                                                WHERE po.company_id = c.id
+                                                AND po.dealer_id = $dealer_id
+                                            ), 0)
+                                        ) AS balance
+                            
+                                    FROM companies c
+                                    WHERE c.dealer_id = $dealer_id
+                                ");
+
                                 while($row = mysqli_fetch_assoc($result)){
                                     echo '<tr class="hover:bg-gray-50 transition-colors">
                                             <td class="py-4 px-6 text-sm font-medium text-gray-900">'.$row["id"].'</td>
@@ -134,6 +164,11 @@
                                             <td class="py-4 px-6 text-sm text-gray-900">'.$row["contact_person"].'</td>
                                             <td class="py-4 px-6 text-sm text-gray-900">'.$row["phone"].'</td>
                                             <td class="py-4 px-6 text-sm text-gray-900">'.$row["email"].'</td>
+                                            <td class="py-4 px-6 text-sm font-medium">
+                                                <span class="'.($row["balance"] > 0 ? 'text-green-600' : ($row["balance"] < 0 ? 'text-red-600' : 'text-gray-900')).'">
+                                                    '.($row["balance"] > 0 ? '+' : ($row["balance"] < 0 ? '-' : '')).'₹'.number_format(abs($row["balance"]), 2).'
+                                                </span>
+                                            </td> 
                                             <td class="py-4 px-6">
                                                 <div class="flex items-center gap-2">
                                                     <button onclick="openEditProductModal(

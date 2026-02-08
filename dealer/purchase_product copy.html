@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Goods - Dealer Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#6366F1',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-screen bg-white border-r border-gray-200 transition-transform duration-300 z-50">
+        <div class="px-6 py-6 border-b border-gray-200">
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                DealerPro
+            </h2>
+        </div>
+        
+        <nav class="p-3 mt-4">
+            <a href="dashboard.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+                <i class="fas fa-home w-5 mr-3"></i>
+                <span class="font-medium">Dashboard</span>
+            </a>
+            <a href="products.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+                <i class="fas fa-box w-5 mr-3"></i>
+                <span class="font-medium">Products</span>
+            </a>
+             <a href="companies.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+                <i class="fas fa-box w-5 mr-3"></i>
+                <span class="font-medium">Companies</span>
+            </a>
+            <a href="purchases.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+                <i class="fas fa-shopping-cart w-5 mr-3"></i>   
+                <span class="font-medium">Purchases</span>
+            </a>
+            <a href="sales.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+                <i class="fas fa-cash-register w-5 mr-3"></i>
+                <span class="font-medium">Sales</span>
+            </a>
+            <a href="staff.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+                <i class="fas fa-users w-5 mr-3"></i>
+                <span class="font-medium">Staff Management</span>
+            </a>
+            <a href="reports.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+                <i class="fas fa-chart-line w-5 mr-3"></i>
+                <span class="font-medium">Reports</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="ml-64">
+        <!-- Top Navigation -->
+        <header class="sticky top-0 bg-white border-b border-gray-200 px-8 py-4 shadow-sm z-40">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <button id="menuToggle" class="lg:hidden text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <h1 class="text-2xl font-semibold text-gray-900">Purchase Goods</h1>
+                </div>
+                <div class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
+                    <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
+                         alt="Profile" class="w-9 h-9 rounded-full">
+                    <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
+                    <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="p-8 max-w-7xl">
+            
+            <!-- Page Header -->
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-gray-900">Record Goods Received</h2>
+                <p class="text-gray-500 mt-1">Record goods received from company and payment details</p>
+            </div>
+
+            <!-- Purchase Form -->
+            <form action="process_purchase.php" method="POST" id="purchaseForm">
+                
+                <!-- Section 1: Company Selection -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-building text-primary"></i>
+                        Select Company
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Company Name *
+                            </label>
+                            <select name="company_id" id="companySelect" required onchange="loadCompanyBalance()"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
+                                <option value="">-- Select Company --</option>
+                                <option value="1" data-balance="-5000">ABC Suppliers Pvt Ltd</option>
+                                <option value="2" data-balance="2000">XYZ Trading Company</option>
+                                <option value="3" data-balance="0">PQR Wholesalers</option>
+                                <option value="4" data-balance="-12500">LMN Distributors</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Current Balance with Company
+                            </label>
+                            <div id="companyBalancePreview" class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-base font-medium text-gray-500">
+                                Select a company to see balance
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Purchase Order Details -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-file-invoice text-primary"></i>
+                        Purchase Details
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Purchase Date *
+                            </label>
+                            <input type="date" name="purchase_date" id="purchaseDate" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Bill Number / Reference (Optional)
+                            </label>
+                            <input type="text" name="bill_number" placeholder="e.g., BILL-2024-001"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Products Table -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <i class="fas fa-boxes text-primary"></i>
+                            Goods Received
+                        </h3>
+                        <button type="button" onclick="addProductRow()" 
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-lg shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all text-sm">
+                            <i class="fas fa-plus"></i>
+                            Add Product
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full" id="productsTable">
+                            <thead>
+                                <tr class="bg-gray-50 border-b border-gray-200">
+                                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/3">Product Name</th>
+                                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/6">Base Price (₹)</th>
+                                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/6">Quantity</th>
+                                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/5">Line Total (₹)</th>
+                                    <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <!-- Product rows will be added here dynamically -->
+                                <tr>
+                                    <td colspan="5" class="py-8 text-center text-gray-500">
+                                        <i class="fas fa-box-open text-4xl mb-2 text-gray-300"></i>
+                                        <p>Click "Add Product" to start adding goods</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Section 4: Goods Summary -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-calculator text-blue-600"></i>
+                        Goods Summary
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white rounded-lg p-4 border border-blue-200">
+                            <p class="text-sm text-gray-600 mb-1">Total Items</p>
+                            <p class="text-2xl font-bold text-gray-900" id="totalItems">0</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 border border-blue-200">
+                            <p class="text-sm text-gray-600 mb-1">Total Goods Value</p>
+                            <p class="text-2xl font-bold text-blue-600" id="totalGoodsValue">₹0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 5: Payment Details -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-money-bill-wave text-primary"></i>
+                        Payment Details
+                    </h3>
+                    
+                    <div class="mb-4">
+                        <label class="flex items-center gap-3 cursor-pointer w-fit">
+                            <input type="checkbox" id="paymentMadeToggle" onchange="togglePaymentFields()"
+                                   class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary">
+                            <span class="text-base font-medium text-gray-700">Making payment now?</span>
+                        </label>
+                    </div>
+                    
+                    <div id="paymentFields" class="hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Amount Paid (₹) *
+                                </label>
+                                <input type="number" name="amount_paid" id="amountPaid" step="0.01" min="0" value="0" oninput="calculateBalance()"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
+                                <p class="text-xs text-gray-500 mt-1">Can pay more or less than goods value</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Payment Mode *
+                                </label>
+                                <select name="payment_mode" id="paymentMode"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
+                                    <option value="CASH">Cash</option>
+                                    <option value="UPI">UPI</option>
+                                    <option value="BANK">Bank Transfer</option>
+                                    <option value="CHEQUE">Cheque</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Payment Date *
+                                </label>
+                                <input type="date" name="payment_date" id="paymentDate"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 6: Balance Preview -->
+                <div id="balancePreview" class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <i class="fas fa-balance-scale text-amber-600"></i>
+                        Balance After This Purchase
+                    </h3>
+                    
+                    <div id="balanceMessage" class="text-base text-gray-600">
+                        Add products and payment details to see balance preview
+                    </div>
+                </div>
+
+                <!-- Section 7: Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button type="submit" name="action" value="save"
+                            class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-xl transition-all text-base">
+                        <i class="fas fa-check-circle"></i>
+                        Save Purchase
+                    </button>
+                    
+                    <button type="submit" name="action" value="save_and_new"
+                            class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all text-base">
+                        <i class="fas fa-save"></i>
+                        Save & New Purchase
+                    </button>
+                    
+                    <a href="purchases.php"
+                       class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all text-base">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+
+        </main>
+    </div>
+
+    <script>
+        // Initialize
+        let productRowCounter = 0;
+        const productsList = [
+            { id: 1, name: 'Rice (1kg)', basePrice: 50.00 },
+            { id: 2, name: 'Wheat Flour (1kg)', basePrice: 45.00 },
+            { id: 3, name: 'Sugar (1kg)', basePrice: 42.00 },
+            { id: 4, name: 'Cooking Oil (1L)', basePrice: 120.00 },
+            { id: 5, name: 'Tea Powder (250g)', basePrice: 85.00 },
+            { id: 6, name: 'Coffee Powder (200g)', basePrice: 95.00 },
+            { id: 7, name: 'Salt (1kg)', basePrice: 20.00 },
+            { id: 8, name: 'Turmeric Powder (100g)', basePrice: 35.00 },
+        ];
+
+        // Set today's date
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('purchaseDate').value = today;
+            document.getElementById('paymentDate').value = today;
+        });
+
+        // Load company balance
+        function loadCompanyBalance() {
+            const select = document.getElementById('companySelect');
+            const balancePreview = document.getElementById('companyBalancePreview');
+            const selectedOption = select.options[select.selectedIndex];
+            
+            if (!selectedOption.value) {
+                balancePreview.innerHTML = '<span class="text-gray-500">Select a company to see balance</span>';
+                balancePreview.className = 'px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-base font-medium text-gray-500';
+                return;
+            }
+            
+            const balance = parseFloat(selectedOption.getAttribute('data-balance'));
+            
+            if (balance < 0) {
+                balancePreview.innerHTML = `<i class="fas fa-arrow-up mr-2"></i>You need to pay <strong>₹${Math.abs(balance).toFixed(2)}</strong>`;
+                balancePreview.className = 'px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-base font-medium text-red-700';
+            } else if (balance > 0) {
+                balancePreview.innerHTML = `<i class="fas fa-arrow-down mr-2"></i>Company owes you <strong>₹${balance.toFixed(2)}</strong>`;
+                balancePreview.className = 'px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-base font-medium text-green-700';
+            } else {
+                balancePreview.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Account settled';
+                balancePreview.className = 'px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg text-base font-medium text-blue-700';
+            }
+            
+            calculateBalance();
+        }
+
+        // Add product row
+        function addProductRow() {
+            const tbody = document.getElementById('productsTableBody');
+            const emptyRow = tbody.querySelector('tr td[colspan="5"]');
+            if (emptyRow) {
+                emptyRow.parentElement.remove();
+            }
+            
+            productRowCounter++;
+            const rowId = `row_${productRowCounter}`;
+            
+            const row = document.createElement('tr');
+            row.id = rowId;
+            row.className = 'border-b border-gray-200 hover:bg-gray-50 transition-colors';
+            row.innerHTML = `
+                <td class="py-3 px-4">
+                    <select name="products[${productRowCounter}][product_id]" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
+                            onchange="updatePrice('${rowId}')" required>
+                        <option value="">-- Select Product --</option>
+                        ${productsList.map(p => `<option value="${p.id}" data-price="${p.basePrice}">${p.name}</option>`).join('')}
+                    </select>
+                </td>
+                <td class="py-3 px-4">
+                    <input type="number" name="products[${productRowCounter}][base_price]" 
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm price-input"
+                           oninput="calculateLineTotal('${rowId}')" required>
+                </td>
+                <td class="py-3 px-4">
+                    <input type="number" name="products[${productRowCounter}][quantity]" 
+                           min="1" placeholder="0"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm quantity-input"
+                           oninput="calculateLineTotal('${rowId}')" required>
+                </td>
+                <td class="py-3 px-4">
+                    <div class="flex items-center gap-1">
+                        <span class="text-gray-500">₹</span>
+                        <input type="text" class="line-total w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-900" 
+                               readonly value="0.00">
+                    </div>
+                </td>
+                <td class="py-3 px-4 text-center">
+                    <button type="button" onclick="removeProductRow('${rowId}')"
+                            class="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        }
+
+        // Update price when product selected
+        function updatePrice(rowId) {
+            const row = document.getElementById(rowId);
+            const productSelect = row.querySelector('select');
+            const priceInput = row.querySelector('.price-input');
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            
+            if (price) {
+                priceInput.value = parseFloat(price).toFixed(2);
+                calculateLineTotal(rowId);
+            }
+        }
+
+        // Calculate line total
+        function calculateLineTotal(rowId) {
+            const row = document.getElementById(rowId);
+            const price = parseFloat(row.querySelector('.price-input').value) || 0;
+            const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+            const lineTotal = price * quantity;
+            
+            row.querySelector('.line-total').value = lineTotal.toFixed(2);
+            calculateTotals();
+        }
+
+        // Remove product row
+        function removeProductRow(rowId) {
+            const row = document.getElementById(rowId);
+            row.remove();
+            
+            const tbody = document.getElementById('productsTableBody');
+            if (tbody.children.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-gray-500">
+                            <i class="fas fa-box-open text-4xl mb-2 text-gray-300"></i>
+                            <p>Click "Add Product" to start adding goods</p>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            calculateTotals();
+        }
+
+        // Calculate totals
+        function calculateTotals() {
+            const lineTotals = document.querySelectorAll('.line-total');
+            let totalItems = 0;
+            let totalValue = 0;
+            
+            lineTotals.forEach(input => {
+                const value = parseFloat(input.value) || 0;
+                if (value > 0) {
+                    totalItems++;
+                    totalValue += value;
+                }
+            });
+            
+            document.getElementById('totalItems').textContent = totalItems;
+            document.getElementById('totalGoodsValue').textContent = `₹${totalValue.toFixed(2)}`;
+            
+            calculateBalance();
+        }
+
+        // Toggle payment fields
+        function togglePaymentFields() {
+            const checkbox = document.getElementById('paymentMadeToggle');
+            const fields = document.getElementById('paymentFields');
+            const amountPaid = document.getElementById('amountPaid');
+            const paymentMode = document.getElementById('paymentMode');
+            const paymentDate = document.getElementById('paymentDate');
+            
+            if (checkbox.checked) {
+                fields.classList.remove('hidden');
+                amountPaid.required = true;
+                paymentMode.required = true;
+                paymentDate.required = true;
+            } else {
+                fields.classList.add('hidden');
+                amountPaid.required = false;
+                paymentMode.required = false;
+                paymentDate.required = false;
+                amountPaid.value = 0;
+            }
+            
+            calculateBalance();
+        }
+
+        // Calculate balance after purchase
+        function calculateBalance() {
+            const companySelect = document.getElementById('companySelect');
+            const selectedOption = companySelect.options[companySelect.selectedIndex];
+            
+            if (!selectedOption.value) {
+                document.getElementById('balanceMessage').innerHTML = 'Select a company to see balance preview';
+                return;
+            }
+            
+            const currentBalance = parseFloat(selectedOption.getAttribute('data-balance')) || 0;
+            const totalGoodsValue = parseFloat(document.getElementById('totalGoodsValue').textContent.replace('₹', '')) || 0;
+            const amountPaid = parseFloat(document.getElementById('amountPaid').value) || 0;
+            
+            // Balance = Current Balance - Total Goods Value + Amount Paid
+            // Negative balance means dealer owes company
+            const newBalance = currentBalance - totalGoodsValue + amountPaid;
+            
+            const balanceMessage = document.getElementById('balanceMessage');
+            
+            if (totalGoodsValue === 0) {
+                balanceMessage.innerHTML = 'Add products to see balance preview';
+                balanceMessage.className = 'text-base text-gray-600';
+                return;
+            }
+            
+            let message = '<div class="space-y-2">';
+            message += '<p class="font-medium text-gray-900">After this purchase:</p>';
+            
+            if (newBalance < 0) {
+                message += `<p class="text-lg"><i class="fas fa-arrow-up text-red-600 mr-2"></i>You will owe company <strong class="text-red-700 text-xl">₹${Math.abs(newBalance).toFixed(2)}</strong></p>`;
+            } else if (newBalance > 0) {
+                message += `<p class="text-lg"><i class="fas fa-arrow-down text-green-600 mr-2"></i>Company will owe you <strong class="text-green-700 text-xl">₹${newBalance.toFixed(2)}</strong></p>`;
+            } else {
+                message += `<p class="text-lg"><i class="fas fa-check-circle text-blue-600 mr-2"></i><strong class="text-blue-700 text-xl">Account will be settled</strong></p>`;
+            }
+            
+            message += '</div>';
+            balanceMessage.innerHTML = message;
+        }
+
+        // Form validation
+        document.getElementById('purchaseForm').addEventListener('submit', function(e) {
+            const tbody = document.getElementById('productsTableBody');
+            const hasProducts = tbody.querySelector('.line-total') !== null;
+            
+            if (!hasProducts) {
+                e.preventDefault();
+                alert('Please add at least one product');
+                return false;
+            }
+            
+            const companySelect = document.getElementById('companySelect');
+            if (!companySelect.value) {
+                e.preventDefault();
+                alert('Please select a company');
+                return false;
+            }
+            
+            return true;
+        });
+
+        // Mobile menu toggle
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth < 1024) {
+                if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            }
+        });
+
+        function handleResize() {
+            if (window.innerWidth < 1024) {
+                sidebar.classList.add('-translate-x-full');
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+            }
+        }
+        
+        window.addEventListener('resize', handleResize);
+        handleResize();
+    </script>
+
+</body>
+</html>

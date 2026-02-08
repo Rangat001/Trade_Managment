@@ -1,3 +1,16 @@
+<?php
+    require '../includes/scripts/connection.php';  
+    session_start();
+    if(isset($_SESSION['rgt_logedin_user_id']) && (trim ($_SESSION['rgt_logedin_user_id']) !== '')){
+        $user_id = $_SESSION['rgt_logedin_user_id'];
+        $user_role = $_SESSION['rgt_logedin_user_role'];
+        if($user_role != "ADMIN"){
+            header("Location: ../404.php");
+        }
+    }else{
+        header("Location: ../auth/sign-in.php");
+    }
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -87,7 +100,7 @@
             <!-- Page Header -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h2 class="text-2xl font-semibold text-gray-900">Purchase Entry</h2>
-                <button onclick="openAddPurchaseModal()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all">
+                <button onclick="window.location.href='purchase_product.php'" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all">
                     <i class="fas fa-plus"></i>
                     <span>Add Purchase</span>
                 </button>
@@ -103,51 +116,107 @@
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quantity</th>
                                 <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Purchase Price</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Amount</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Added By</th>
-                            </tr>
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Amount</th>
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount Paid</th>
+                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>   
                         </thead>
                         <tbody class="divide-y divide-gray-200">
+                            <?php 
+                                    $psql = "SELECT 
+                                                po.id AS order_id,
+                                                po.order_date,
+                                                pr.product_name,
+                                                poi.quantity,
+                                                poi.base_price,
+                                                poi.total_price,
+                                                po.status,
+
+                                                COALESCE(
+                                                    SUM(
+                                                        CASE 
+                                                            WHEN ct.type = 'DEBIT' THEN ct.amount
+                                                            ELSE 0
+                                                        END 
+                                                    ), 0
+                                                ) AS paid_amount
+
+                                            FROM purchase_order_items poi
+
+                                            JOIN purchase_orders po 
+                                                ON po.id = poi.order_id
+
+                                            JOIN products pr 
+                                                ON pr.id = poi.product_id
+
+                                            LEFT JOIN company_transactions ct 
+                                                ON ct.order_id = po.id
+
+                                            WHERE po.dealer_id = ?
+                                            GROUP BY poi.id
+                                            ORDER BY po.order_date DESC ";
+                                    $stmt = $conn->prepare($psql);
+                                    $stmt->bind_param("i", $_SESSION['rgt_logedin_user_dealer_id']);
+                                    $stmt->execute();
+                                    $result = $stmt->get_result();
+                                    while ($row = $result->fetch_assoc()) { 
+                                       ?>
                             <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm text-gray-500">Feb 5, 2026 10:30 AM</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">Rice (1kg)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">100</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹50.00</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">₹5,000.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-500">Dealer Admin</td>
+                                
+
+                                <td class="py-4 px-6 text-sm text-gray-500">
+                                   <?= date("d/m/Y", strtotime($row['order_date'])) ?>  
+                                </td>
+
+                                <td class="py-4 px-6 text-sm font-medium text-gray-900">
+                                    <?= htmlspecialchars($row['product_name']) ?>
+                                </td>
+
+                                <td class="py-4 px-6 text-sm text-gray-900">
+                                    <?= $row['quantity'] ?>
+                                </td>
+
+                                <td class="py-4 px-6 text-sm text-gray-900">
+                                    ₹<?= number_format($row['base_price'], 2) ?>
+                                </td>
+
+                                <td class="py-4 px-6 text-sm font-medium text-gray-900">
+                                    ₹<?= number_format($row['total_price'], 2) ?>
+                                </td>
+
+                                <td class="py-4 px-6 text-sm font-medium text-green-600">
+                                    ₹<?= number_format($row['paid_amount'], 2) ?>
+                                </td>
+
+                                <!-- ✅ STATUS COLUMN -->
+                                <td class="py-4 px-6 text-sm font-medium">
+                                    <?php
+                                        $status = $row['status'];
+
+                                        $statusClass = match ($status) {
+                                            'RECEIVED'  => 'text-green-600',
+                                            'REQUESTED' => 'text-yellow-600',
+                                            'CANCELLED' => 'text-red-600',
+                                            default     => 'text-gray-500',
+                                        };
+                                    ?>
+
+                                    <span class="<?= $statusClass ?>">
+                                        <?= $status ?>
+                                    </span>
+
+                                    <?php if ($status === 'REQUESTED'): ?>
+                                        <button 
+                                            onclick="markAsReceived(<?= $row['order_id'] ?>)" 
+                                            class="ml-2 px-2 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded">
+                                            Mark as Received
+                                        </button>
+                                       
+                                    <?php endif; ?>
+                                </td>
+
                             </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm text-gray-500">Feb 4, 2026 2:15 PM</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">Wheat Flour (1kg)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">80</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹45.00</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">₹3,600.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-500">Rajesh Kumar</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm text-gray-500">Feb 3, 2026 11:00 AM</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">Sugar (1kg)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">60</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹42.00</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">₹2,520.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-500">Dealer Admin</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm text-gray-500">Feb 2, 2026 4:20 PM</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">Cooking Oil (1L)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">50</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹120.00</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">₹6,000.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-500">Dealer Admin</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm text-gray-500">Feb 1, 2026 9:45 AM</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">Tea Powder (250g)</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">40</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">₹85.00</td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">₹3,400.00</td>
-                                <td class="py-4 px-6 text-sm text-gray-500">Rajesh Kumar</td>
-                            </tr>
+                            <?php } ?>
                         </tbody>
                     </table>
                 </div>
@@ -155,67 +224,6 @@
 
         </main>
     </div>
-
-    <!-- Add Purchase Modal -->
-    <div id="addPurchaseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-200">
-                <h3 class="text-xl font-semibold text-gray-900">Add Purchase Entry</h3>
-                <button onclick="closeAddPurchaseModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
-                    <i class="fas fa-times text-gray-500"></i>
-                </button>
-            </div>
-            
-            <form action="add_purchase.php" method="POST" class="p-6">
-                <div class="space-y-5">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Product *</label>
-                        <select name="product_id" id="productSelect" required onchange="updatePurchasePrice()"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
-                            <option value="">-- Select Product --</option>
-                            <option value="1" data-price="50.00">Rice (1kg)</option>
-                            <option value="2" data-price="45.00">Wheat Flour (1kg)</option>
-                            <option value="3" data-price="42.00">Sugar (1kg)</option>
-                            <option value="4" data-price="120.00">Cooking Oil (1L)</option>
-                            <option value="5" data-price="85.00">Tea Powder (250g)</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Purchase Price (₹) *</label>
-                        <input type="number" name="purchase_price" id="purchasePrice" step="0.01" min="0" required onchange="checkPriceChange()"
-                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
-                        <p class="mt-1 text-xs text-gray-500">Current purchase price will be auto-filled</p>
-                    </div>
-                    
-                    <div id="priceWarning" class="hidden">
-                        <div class="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                            <i class="fas fa-exclamation-triangle text-amber-600 mt-0.5"></i>
-                            <p class="text-sm text-amber-800">Price has changed from the original purchase price</p>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
-                        <input type="number" name="quantity" min="1" required 
-                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200">
-                    <button type="button" onclick="closeAddPurchaseModal()" 
-                            class="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg transition-colors">
-                        Cancel
-                    </button>
-                    <button type="submit" 
-                            class="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-lg shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all">
-                        Add Purchase
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
         // Modal Functions
         function openAddPurchaseModal() {
@@ -285,6 +293,43 @@
         
         window.addEventListener('resize', handleResize);
         handleResize();
+
+                                                // Mark as Received Function
+        // Mark as Received Function
+function markAsReceived(orderId) {
+    if (!confirm("Mark this order as RECEIVED?")) return;
+                                        
+    fetch("mark_order_received.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "order_id=" + orderId
+    })
+    .then(res => {
+        console.log("Response status:", res.status);
+        console.log("Response ok:", res.ok);
+        return res.text(); // Get raw text first
+    })
+    .then(text => {
+        console.log("Raw response:", text);
+        try {
+            const data = JSON.parse(text);
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || "Failed to update order");
+            }
+        } catch(e) {
+            console.error("JSON parse error:", e);
+            alert("Server returned invalid response: " + text);
+        }
+    })
+    .catch(err => {
+        console.error("Fetch error:", err);
+        alert("Network error: " + err.message);
+    });
+}
     </script>
 
 </body>

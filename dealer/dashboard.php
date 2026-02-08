@@ -8,7 +8,7 @@
             header("Location: ../404.php");
         }
     }else{
-        header("Location: ../sign-in.php");
+        header("Location: ../auth/sign-in.php");
     }
 ?>
 <!DOCTYPE html>
