@@ -85,12 +85,25 @@
                     </button>
                     <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
                 </div>
-                <div class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
-                    <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
-                         alt="Profile" class="w-9 h-9 rounded-full">
-                    <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
-                    <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+
+                <div class="relative">
+                    <button id="profileDropdown" class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
+                        <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
+                             alt="Profile" class="w-9 h-9 rounded-full">
+                        <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
+                        <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                        
+                        <a href="logout.php" class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
                 </div>
+
             </div>
         </header>
 
@@ -289,6 +302,25 @@
         
         window.addEventListener('resize', handleResize);
         handleResize();
+
+
+        // Profile dropdown toggle
+
+        const profileDropdown = document.getElementById('profileDropdown');
+        const profileMenu = document.getElementById('profileMenu');
+
+        profileDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileMenu.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
+                profileMenu.classList.add('hidden');
+            }
+        });
+
     </script>
 
 </body>

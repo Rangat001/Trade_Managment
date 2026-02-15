@@ -20,6 +20,29 @@
     <title>Products - Dealer Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="../asset/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="../asset/plugins/icons/ionic/ionicons.css">
+
+    <link rel="stylesheet" href="../asset/plugins/icons/feather/feather.css">
+
+    <link rel="stylesheet" href="../asset/css/animate.css">
+
+    <link rel="stylesheet" href="../asset/plugins/select2/css/select2.min.css">
+
+    <link rel="stylesheet" href="../asset/css/dataTables.bootstrap4.min.css">
+
+    <link rel="stylesheet" href="../asset/plugins/fontawesome/css/fontawesome.min.css">
+    <link rel="stylesheet" href="../asset/plugins/fontawesome/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="../asset/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
+
+
     <script>
         tailwind.config = {
             theme: {
@@ -86,11 +109,23 @@
                     </button>
                     <h1 class="text-2xl font-semibold text-gray-900">Products</h1>
                 </div>
-                <div class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
-                    <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
-                         alt="Profile" class="w-9 h-9 rounded-full">
-                    <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
-                    <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+
+                <div class="relative">
+                    <button id="profileDropdown" class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
+                        <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
+                             alt="Profile" class="w-9 h-9 rounded-full">
+                        <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
+                        <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                        
+                        <a href="logout.php" class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </header>
@@ -108,19 +143,29 @@
             </div>
 
             <!-- Products Table -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
+            <div class="card">
+                <div class="card-body">
+                <div class="table-top">
+                            <div class="search-set">
+                                <div class="search-input">
+                                    <a class="btn btn-searchset"><img src="../asset/img/icons/search-white.svg"
+                                            alt="img"></a>
+                                </div>
+                            </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table  datanew">
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">No.</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">dealer_id</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Company Name</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Name</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Base Price</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">selling Price</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">current stock</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th>No.</th>
+                                <th>dealer_id</th>
+                                <th>Company Name</th>
+                                <th>Product Name</th>
+                                <th>Base Price</th>
+                                <th>selling Price</th>
+                                <th>current stock</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                             <tbody class="divide-y divide-gray-200">
@@ -158,7 +203,7 @@
                                     } else {
                                         ?>
                                         <tr>
-                                            <td colspan="8" class="py-8 px-6 text-center text-gray-500">
+                                            <td class="py-8 px-6 text-center text-gray-500">
                                                 No products found. Click "Add Product" to get started.
                                             </td>
                                         </tr>
@@ -168,6 +213,7 @@
                             </tbody>
                     </table>
                 </div>
+                </div>
             </div>
 
         </main>
@@ -176,7 +222,7 @@
     <!-- Add Product Modal -->
     <div id="addProductModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200">
                 <h3 class="text-xl font-semibold text-gray-900">Add New Product</h3>
                 <button onclick="closeAddProductModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
                     <i class="fas fa-times text-gray-500"></i>
@@ -184,7 +230,7 @@
             </div>
             
             <form action="add_product.php" method="POST" class="p-6">
-                <div class="space-y-5">
+                <div class="space-y-3">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
                         <input type="text" name="product_name" required 
@@ -219,7 +265,7 @@
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Initial Quantity</label>
-                        <input type="number" name="initial_quantity" min="0" required 
+                        <input type="number" name="initial_quantity" min="0"  value="0" disabled 
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                     </div>
                 </div>
@@ -291,6 +337,25 @@
                 </form>
         </div>
     </div>
+
+    <script src="../asset/js/jquery-3.6.0.min.js"></script>
+
+    <script src="../asset/js/feather.min.js"></script>
+
+    <script src="../asset/js/jquery.slimscroll.min.js"></script>
+
+    <script src="../asset/js/jquery.dataTables.min.js"></script>
+    <script src="../asset/js/dataTables.bootstrap4.min.js"></script>
+
+    <script src="../asset/js/bootstrap.bundle.min.js"></script>
+
+    <script src="../asset/plugins/select2/js/select2.min.js"></script>
+
+    <script src="../asset/plugins/sweetalert/sweetalert2.all.min.js"></script>
+    <script src="../asset/plugins/sweetalert/sweetalerts.min.js"></script>
+
+    <script src="../asset/js/script.js"></script>
+
 
     <script>
         // Modal Functions

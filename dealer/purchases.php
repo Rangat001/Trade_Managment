@@ -17,6 +17,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchases - Dealer Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="../asset/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="../asset/plugins/icons/ionic/ionicons.css">
+
+    <link rel="stylesheet" href="../asset/plugins/icons/feather/feather.css">
+
+    <link rel="stylesheet" href="../asset/css/animate.css">
+
+    <link rel="stylesheet" href="../asset/plugins/select2/css/select2.min.css">
+
+    <link rel="stylesheet" href="../asset/css/dataTables.bootstrap4.min.css">
+
+    <link rel="stylesheet" href="../asset/plugins/fontawesome/css/fontawesome.min.css">
+    <link rel="stylesheet" href="../asset/plugins/fontawesome/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="../asset/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -85,12 +108,25 @@
                     </button>
                     <h1 class="text-2xl font-semibold text-gray-900">Purchases</h1>
                 </div>
-                <div class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
-                    <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
-                         alt="Profile" class="w-9 h-9 rounded-full">
-                    <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
-                    <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+
+                <div class="relative">
+                    <button id="profileDropdown" class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
+                        <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
+                             alt="Profile" class="w-9 h-9 rounded-full">
+                        <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
+                        <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                        
+                        <a href="logout.php" class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
                 </div>
+                
             </div>
         </header>
 
@@ -107,20 +143,31 @@
             </div>
 
             <!-- Purchases Table -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
+            <div class="card">
+            <div class="card-body">
+                <div class="table-top">
+                            <div class="search-set">
+                                <div class="search-input">
+                                    <a class="btn btn-searchset"><img src="../asset/img/icons/search-white.svg"
+                                            alt="img"></a>
+                                </div>
+                            </div>
+                </div>
+            
+                <div class="table-responsive">
+                    <table class="table  datanew">
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quantity</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Purchase Price</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Amount</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount Paid</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th>Date</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Purchase Price</th>
+                                <th>Product Amount</th>
+                                <th>Amount Paid</th>
+                                <th>Status</th>
                             </tr>   
                         </thead>
+                    <div class="table-responsive">
                         <tbody class="divide-y divide-gray-200">
                             <?php 
                                     $psql = "SELECT 
@@ -218,12 +265,32 @@
                             </tr>
                             <?php } ?>
                         </tbody>
+                    </div>
                     </table>
                 </div>
             </div>
 
         </main>
     </div>
+
+    <script src="../asset/js/jquery-3.6.0.min.js"></script>
+
+    <script src="../asset/js/feather.min.js"></script>
+
+    <script src="../asset/js/jquery.slimscroll.min.js"></script>
+
+    <script src="../asset/js/jquery.dataTables.min.js"></script>
+    <script src="../asset/js/dataTables.bootstrap4.min.js"></script>
+
+    <script src="../asset/js/bootstrap.bundle.min.js"></script>
+
+    <script src="../asset/plugins/select2/js/select2.min.js"></script>
+
+    <script src="../asset/plugins/sweetalert/sweetalert2.all.min.js"></script>
+    <script src="../asset/plugins/sweetalert/sweetalerts.min.js"></script>
+
+    <script src="../asset/js/script.js"></script>
+
     <script>
         // Modal Functions
         function openAddPurchaseModal() {

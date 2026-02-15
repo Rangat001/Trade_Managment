@@ -20,6 +20,28 @@
     <title>Sales - Dealer Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="../asset/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="../asset/plugins/icons/ionic/ionicons.css">
+
+    <link rel="stylesheet" href="../asset/plugins/icons/feather/feather.css">
+
+    <link rel="stylesheet" href="../asset/css/animate.css">
+
+    <link rel="stylesheet" href="../asset/plugins/select2/css/select2.min.css">
+
+    <link rel="stylesheet" href="../asset/css/dataTables.bootstrap4.min.css">
+
+    <link rel="stylesheet" href="../asset/plugins/fontawesome/css/fontawesome.min.css">
+    <link rel="stylesheet" href="../asset/plugins/fontawesome/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="../asset/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
+
     <script>
         tailwind.config = {
             theme: {
@@ -86,12 +108,25 @@
                     </button>
                     <h1 class="text-2xl font-semibold text-gray-900">Sales</h1>
                 </div>
-                <div class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
-                    <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
-                         alt="Profile" class="w-9 h-9 rounded-full">
-                    <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
-                    <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+
+                <div class="relative">
+                    <button id="profileDropdown" class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
+                        <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
+                             alt="Profile" class="w-9 h-9 rounded-full">
+                        <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
+                        <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                        
+                        <a href="logout.php" class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
                 </div>
+
             </div>
         </header>
 
@@ -108,20 +143,30 @@
             </div>
 
             <!-- Sales Table -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
+            <div class="card">
+                <div class="card-body">
+                <div class="table-top">
+                            <div class="search-set">
+                                <div class="search-input">
+                                    <a class="btn btn-searchset"><img src="../asset/img/icons/search-white.svg"
+                                            alt="img"></a>
+                                </div>
+                            </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table  datanew">
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">No.</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Billing type</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quantity</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Profit</th>
-                                
+                                <th>No.</th>
+                                <th>Bill No.</th>
+                                <th>Date</th>
+                                <th>Billing Type</th>
+                                <th>Items Count</th>
+                                <th>Total Qty</th>
+                                <th>Bill Amount</th>
+                                <th>Payable Amount</th>
+                                <th>Profit</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
@@ -133,19 +178,17 @@
                                         s.id AS sale_id,
                                         s.sale_date,
                                         s.billing_type,
-                                        si.quantity,
-                                        si.selling_price,
-                                        si.base_price,
-                                        (si.quantity * si.selling_price) AS line_total,
-                                        ((si.selling_price - si.base_price) * si.quantity) AS line_profit,
-                                        p.product_name
+                                        s.bill_amount,
+                                        s.profit,
+                                        s.total_amount,
+                                        COUNT(si.id) AS item_count,
+                                        SUM(si.quantity) AS total_quantity
                                     FROM sales s
-                                    JOIN sale_items si ON si.sale_id = s.id
-                                    JOIN products p ON p.id = si.product_id
-                                    WHERE s.dealer_id = ?
+                                    LEFT JOIN sale_items si ON si.sale_id = s.id
+                                    WHERE s.dealer_id = ? AND s.is_deleted = 0
+                                    GROUP BY s.id
                                     ORDER BY s.sale_date DESC, s.id DESC
                                 ";
-
                                 $stmt = $conn->prepare($sql);
                                 $stmt->bind_param("i", $dealer_id);
                                 $stmt->execute();
@@ -158,7 +201,12 @@
                                 <td class="py-4 px-6 text-sm font-medium text-gray-900">
                                     <?= $sr++ ?>
                                 </td>
-
+                                
+                                <!-- Bill No. -->
+                                <td class="py-4 px-6 text-sm text-gray-500">
+                                    <?= 'BL' . str_pad($row['sale_id'], 6, '0', STR_PAD_LEFT) ?>
+                                </td>
+                                
                                 <!-- Date -->
                                 <td class="py-4 px-6 text-sm text-gray-500">
                                     <?= date("d/m/Y", strtotime($row['sale_date'])) ?>
@@ -168,42 +216,50 @@
                                 <td class="py-4 px-6 text-sm text-gray-900">
                                     <?= htmlspecialchars($row['billing_type']) ?>
                                 </td>
-
-                                <!-- Product -->
+                                
+                                <!-- Items Count -->
                                 <td class="py-4 px-6 text-sm text-gray-900">
-                                    <?= htmlspecialchars($row['product_name']) ?>
+                                    <?= $row['item_count'] ?> item(s)
                                 </td>
 
-                                <!-- Quantity -->
+                                <!-- Total Quantity -->
                                 <td class="py-4 px-6 text-sm text-gray-900">
-                                    <?= $row['quantity'] ?>
+                                    <?= $row['total_quantity'] ?>
                                 </td>
 
-                                <!-- Price -->
-                                <td class="py-4 px-6 text-sm text-gray-900">
-                                    ₹<?= number_format($row['selling_price'], 2) ?>
-                                </td>
-
-                                <!-- Total -->
+                                <!-- Bill Amount -->
                                 <td class="py-4 px-6 text-sm font-medium text-gray-900">
-                                    ₹<?= number_format($row['line_total'], 2) ?>
+                                    ₹<?= number_format($row['bill_amount'], 2) ?>
                                 </td>
+
+                                <!-- Payable Amount -->
+                                <td class="py-4 px-6 text-sm font-medium text-gray-900">
+                                    ₹<?= number_format($row['total_amount'], 2) ?>
+                                </td>
+
 
                                 <!-- Profit -->
-                                <td class="py-4 px-6 text-sm font-medium 
-                                    <?= $row['line_profit'] >= 0 ? 'text-green-600' : 'text-red-600' ?>">
-                                    ₹<?= number_format($row['line_profit'], 2) ?>
+                                <td class="py-4 px-6 text-sm font-medium <?= $row['profit'] >= 0 ? 'text-green-600' : 'text-red-600' ?>">
+                                    ₹<?= number_format($row['profit'], 2) ?>
                                 </td>
 
-                                <!-- Action / User
                                 <td class="py-4 px-6 text-sm text-gray-500">
-                                    Dealer
-                                </td> -->
+                                    <button onclick="window.location.href='sale_details.php?id=<?= $row['sale_id'] ?>'" 
+                                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+
+                                    <button onclick="deleteSale(<?= $row['sale_id'] ?>)" 
+                                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </td>
                             </tr>
                         <?php endwhile; ?>
                             
                         </tbody>
                     </table>
+                </div>
                 </div>
             </div>
 
@@ -274,7 +330,55 @@
         </div>
     </div>
 
+    
+    <script src="../asset/js/jquery-3.6.0.min.js"></script>
+
+    <script src="../asset/js/feather.min.js"></script>
+
+    <script src="../asset/js/jquery.slimscroll.min.js"></script>
+
+    <script src="../asset/js/jquery.dataTables.min.js"></script>
+    <script src="../asset/js/dataTables.bootstrap4.min.js"></script>
+
+    <script src="../asset/js/bootstrap.bundle.min.js"></script>
+
+    <script src="../asset/plugins/select2/js/select2.min.js"></script>
+
+    <script src="../asset/plugins/sweetalert/sweetalert2.all.min.js"></script>
+    <script src="../asset/plugins/sweetalert/sweetalerts.min.js"></script>
+
+    <script src="../asset/js/script.js"></script>
+
     <script>
+
+        // Delete sale function
+        function deleteSale(saleId) {
+            if (!confirm("Are you sure you want to delete this sale? This action cannot be undone.")) {
+                return;
+            }
+
+            fetch("delete_sale.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "sale_id=" + saleId
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Sale deleted successfully!");
+                    location.reload();
+                } else {
+                    alert(data.message || "Failed to delete sale");
+                }
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                alert("Something went wrong");
+            });
+        }
+
         function openAddSaleModal() {
             document.getElementById('addSaleModal').classList.remove('hidden');
         }

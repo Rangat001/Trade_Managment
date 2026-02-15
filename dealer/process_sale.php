@@ -136,11 +136,15 @@ try {
         $total_amount += $line_total;
         $total_profit += $profit;
 
-        $stockCheckStmt->close();
-        $stockUpdateStmt->close();
+        
     }
 
+    $stockCheckStmt->close();
+    $stockUpdateStmt->close();
+
     // Discount reduces revenue, NOT base cost
+    $bill = $total_amount;
+
     if ($discount_amount > 0) {
         $total_amount -= $discount_amount;
         if ($total_amount < 0) $total_amount = 0;
@@ -156,15 +160,16 @@ try {
 
     $stmt = $conn->prepare("
         INSERT INTO sales
-        (dealer_id, sale_date, billing_type, total_amount, payment_mode, profit, delivery)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (dealer_id, sale_date, billing_type, bill_amount, total_amount, payment_mode, profit, delivery)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     $stmt->bind_param(
-        "issdsss",
+        "issidsss",
         $dealer_id,
         $sale_date,
         $billing_type,
+        $bill,
         $total_amount,
         $payment_mode,
         $total_profit,
