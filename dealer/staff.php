@@ -1,3 +1,27 @@
+<?php
+session_start();
+require '../includes/scripts/connection.php';  
+
+// Check if dealer is logged in
+if(isset($_SESSION['rgt_logedin_user_id']) && (trim ($_SESSION['rgt_logedin_user_id']) !== '')){
+        $user_id = $_SESSION['rgt_logedin_user_id'];
+        $user_role = $_SESSION['rgt_logedin_user_role'];
+        if($user_role != "ADMIN"){
+            header("Location: ../404.php");
+        }
+    }else{
+        header("Location: ../auth/sign-in.php");
+    }
+
+$dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
+
+// Fetch staff members
+$stmt = $conn->prepare("SELECT id, name, email, role, is_verified FROM users WHERE dealer_id = ?");
+$stmt->bind_param("i", $dealer_id);
+$stmt->execute();
+$staff_result = $stmt->get_result();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -97,6 +121,18 @@
         <!-- Page Content -->
         <main class="p-8">
             
+            <?php if (isset($_SESSION['success'])): ?>
+            <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+            </div>
+            <?php endif; ?>
+            
+            <?php if (isset($_SESSION['error'])): ?>
+            <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+            </div>
+            <?php endif; ?>
+            
             <!-- Page Header -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h2 class="text-2xl font-semibold text-gray-900">Staff Members</h2>
@@ -119,23 +155,27 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
+                            <?php while ($staff = $staff_result->fetch_assoc()): ?>
                             <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">Rajesh Kumar</td>
-                                <td class="py-4 px-6 text-sm text-gray-900">rajesh@shop.com</td>
+                                <td class="py-4 px-6 text-sm font-medium text-gray-900"><?php echo htmlspecialchars($staff['name']); ?></td>
+                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo htmlspecialchars($staff['email']); ?></td>
                                 <td class="py-4 px-6">
-                                    <span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">Staff</span>
+                                    <span class="inline-flex px-3 py-1 text-xs font-medium rounded-full <?php echo $staff['role'] === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'; ?>">
+                                        <?php echo $staff['role']; ?>
+                                    </span>
                                 </td>
                                 <td class="py-4 px-6">
                                     <div class="flex items-center gap-2">
-                                        <button onclick="openEditStaffModal()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                                        <button onclick="openEditStaffModal(<?php echo $staff['id']; ?>, '<?php echo htmlspecialchars($staff['name']); ?>', '<?php echo htmlspecialchars($staff['email']); ?>', '<?php echo $staff['role']; ?>')" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
-                                        <button class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
+                                        <button onclick="disableStaff(<?php echo $staff['id']; ?>)" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
                                             <i class="fas fa-ban"></i> Disable
                                         </button>
                                     </div>
                                 </td>
                             </tr>
+                            <?php endwhile; ?>
                         </tbody>
                     </table>
                 </div>
@@ -235,7 +275,7 @@
                         </select>
                     </div>
                     
-                         
+                        
                 </div>
                 
                 <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200">

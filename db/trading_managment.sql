@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 06, 2026 at 03:01 PM
+-- Generation Time: Mar 06, 2026 at 05:55 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -48,8 +48,10 @@ CREATE TABLE `company_transactions` (
   `company_id` bigint(20) DEFAULT NULL,
   `order_id` bigint(20) DEFAULT NULL,
   `type` enum('CREDIT','DEBIT') DEFAULT NULL,
+  `payment_mode` varchar(15) NOT NULL,
   `amount` decimal(12,2) DEFAULT NULL,
-  `transaction_date` date DEFAULT NULL
+  `transaction_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -126,7 +128,8 @@ CREATE TABLE `purchase_order_items` (
   `order_id` bigint(20) DEFAULT NULL,
   `product_id` bigint(20) DEFAULT NULL,
   `quantity` int(11) DEFAULT NULL,
-  `price` decimal(10,2) DEFAULT NULL
+  `base_price` decimal(10,2) DEFAULT NULL,
+  `total_price` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -137,10 +140,15 @@ CREATE TABLE `purchase_order_items` (
 
 CREATE TABLE `sales` (
   `id` bigint(20) NOT NULL,
-  `dealer_id` bigint(20) DEFAULT NULL,
-  `sale_date` date DEFAULT NULL,
-  `total_amount` decimal(12,2) DEFAULT NULL,
-  `profit` decimal(12,2) DEFAULT NULL
+  `dealer_id` bigint(20) NOT NULL,
+  `sale_date` date NOT NULL,
+  `billing_type` enum('GST','NON-GST') NOT NULL,
+  `bill_amount` int(11) NOT NULL,
+  `total_amount` decimal(12,2) NOT NULL,
+  `payment_mode` enum('UPI','CASH','CARD') NOT NULL,
+  `profit` decimal(12,2) NOT NULL,
+  `delivery` enum('ON-HAND','PENDING','DELIVERED') NOT NULL,
+  `is_deleted` tinyint(4) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -239,7 +247,7 @@ ALTER TABLE `purchase_order_items`
 --
 ALTER TABLE `sales`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `dealer_id` (`dealer_id`);
+  ADD KEY `idx_sales_dealer_active` (`dealer_id`,`is_deleted`,`sale_date`);
 
 --
 -- Indexes for table `sale_items`

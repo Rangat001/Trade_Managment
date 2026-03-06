@@ -10,6 +10,8 @@
     }else{
         header("Location: ../auth/sign-in.php");
     }
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -119,7 +121,7 @@
                             <i class="fas fa-box text-white text-2xl"></i>
                         </div>
                         <div>
-                            <h3 class="text-3xl font-bold text-gray-900">124</h3>
+                            <h3 class="text-3xl font-bold text-gray-900">Total Product Count</h3>
                             <p class="text-sm font-medium text-gray-500">Total Products</p>
                         </div>
                     </div>
