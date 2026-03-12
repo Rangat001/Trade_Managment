@@ -40,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['rgt_logedin_user_dealer_id'] = $row["dealer_id"];
             $_SESSION['rgt_logedin_user_name'] = $user_name;
             //                                If Admin come redrect to Dashboard 
-            if($user_role === "ADMIN"){
+            if($user_role === "ADMIN" || $user_role === "STAFF"){
               // echo '<pre>';
               // print_r($row);
               // echo '</pre>';

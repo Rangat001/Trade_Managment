@@ -1,19 +1,6 @@
 <?php
-require '../includes/scripts/connection.php';  
-session_start();
-if(isset($_SESSION['rgt_logedin_user_id']) && (trim($_SESSION['rgt_logedin_user_id']) !== '')){
-    $user_id = $_SESSION['rgt_logedin_user_id'];
-    $user_role = $_SESSION['rgt_logedin_user_role'];
-    if($user_role != "ADMIN"){
-        header("Location: ../404.php");
-        exit;
-    }
-}else{
-    header("Location: ../auth/sign-in.php");
-    exit;
-}
+require_once 'includes/auth_check.php';
 
-$dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
 $sale_id = intval($_GET['id'] ?? 0);
 
 if($sale_id <= 0){
@@ -68,6 +55,7 @@ $items = $items_stmt->get_result();
             }
         }
     </script>
+    <?php includePermissionJS(); ?>
 </head>
 <body class="bg-gray-50">
     

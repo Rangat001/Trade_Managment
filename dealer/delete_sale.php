@@ -1,16 +1,9 @@
 <?php
-session_start();
-require '../includes/scripts/connection.php';
+require_once 'includes/auth_check.php';
 
-// Check authentication
-if(!isset($_SESSION['rgt_logedin_user_id']) || trim($_SESSION['rgt_logedin_user_id']) === ''){
-    echo json_encode(['success' => false, 'message' => 'Not logged in']);
-    exit;
-}
-
-$user_role = $_SESSION['rgt_logedin_user_role'];
-if($user_role != "ADMIN"){
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+// Check permission - only admin can delete sales
+if (!$is_admin) {
+    echo json_encode(['success' => false, 'message' => 'You do not have permission to delete sales']);
     exit;
 }
 

@@ -1,19 +1,5 @@
 <?php
-session_start();
-require '../includes/scripts/connection.php';  
-
-// Check if dealer is logged in
-if(isset($_SESSION['rgt_logedin_user_id']) && (trim ($_SESSION['rgt_logedin_user_id']) !== '')){
-        $user_id = $_SESSION['rgt_logedin_user_id'];
-        $user_role = $_SESSION['rgt_logedin_user_role'];
-        if($user_role != "ADMIN"){
-            header("Location: ../404.php");
-        }
-    }else{
-        header("Location: ../auth/sign-in.php");
-    }
-
-$dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
+require_once 'includes/auth_check.php';
 
 // Fetch staff members
 $stmt = $conn->prepare("SELECT id, name, email, role, is_verified FROM users WHERE dealer_id = ?");
@@ -42,6 +28,7 @@ $staff_result = $stmt->get_result();
             }
         }
     </script>
+    <?php includePermissionJS(); ?>
 </head>
 <body class="bg-gray-50">
     

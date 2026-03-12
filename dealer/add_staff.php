@@ -1,25 +1,14 @@
 <?php
-session_start();
+require_once 'includes/auth_check.php';
 
-
-require '../includes/scripts/connection.php';  
-
-// Check if dealer is logged in
-if(isset($_SESSION['rgt_logedin_user_id']) && (trim ($_SESSION['rgt_logedin_user_id']) !== '')){
-        $user_id = $_SESSION['rgt_logedin_user_id'];
-        $user_role = $_SESSION['rgt_logedin_user_role'];
-        if($user_role != "ADMIN"){
-            header("Location: ../404.php");
-        }
-    }else{
-        header("Location: ../auth/sign-in.php");
-    }
-
-$dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
-
+// Check permission - only admin can add staff
+if (!$is_admin) {
+    $_SESSION['error'] = 'You do not have permission to add staff.';
+    header('Location: staff.php');
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
     $name = trim($_POST['staff_name']);
     $email = trim($_POST['staff_email']);
     $role = $_POST['staff_role'];

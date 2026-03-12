@@ -1,15 +1,5 @@
 <?php
-    require '../includes/scripts/connection.php';  
-    session_start();
-    if(isset($_SESSION['rgt_logedin_user_id']) && (trim ($_SESSION['rgt_logedin_user_id']) !== '')){
-        $user_id = $_SESSION['rgt_logedin_user_id'];
-        $user_role = $_SESSION['rgt_logedin_user_role'];
-        if($user_role != "ADMIN"){
-            header("Location: ../404.php");
-        }
-    }else{
-        header("Location: ../sign-in.php");
-    }
+require_once 'includes/auth_check.php';
     
     // Get product_id from URL
     $product_id = isset($_GET['id']) ? $_GET['id'] : 0;
@@ -55,6 +45,7 @@
             }
         }
     </script>
+    <?php includePermissionJS(); ?>
 </head>
 <body class="bg-gray-50">
     

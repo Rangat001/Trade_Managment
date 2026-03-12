@@ -1,17 +1,5 @@
 <?php
-session_start();
-require '../includes/scripts/connection.php'; 
-
-    if(isset($_SESSION['rgt_logedin_user_id']) && (trim ($_SESSION['rgt_logedin_user_id']) !== '')){
-        $user_id = $_SESSION['rgt_logedin_user_id'];
-        $user_role = $_SESSION['rgt_logedin_user_role'];
-        if($user_role != "ADMIN"){
-            header("Location: ../404.php");
-        }
-    }else{
-        header("Location: ../auth/sign-in.php");
-    } 
-
+require_once 'includes/auth_check.php';
 
 if (!isset($_SESSION['rgt_logedin_user_dealer_id'])) {
     echo json_encode([]);

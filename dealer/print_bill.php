@@ -1,6 +1,5 @@
 <?php
-session_start();
-require '../includes/scripts/connection.php';
+require_once 'includes/auth_check.php';
 require_once '../vendor/autoload.php';
 
 use Mpdf\Mpdf;

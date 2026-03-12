@@ -1,9 +1,6 @@
 <?php
-require '../includes/scripts/connection.php';  
-session_start();
+require_once 'includes/auth_check.php';
 
-
-$dealer_id = $_SESSION['rgt_logedin_user_dealer_id']; // tenant / dealer
 $company_id = $_POST['company_id'] ?? null;
 $purchase_date = $_POST['purchase_date'] ?? date('Y-m-d');
 $products = $_POST['products'] ?? [];

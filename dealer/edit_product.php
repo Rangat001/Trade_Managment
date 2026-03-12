@@ -1,21 +1,14 @@
 <?php
-    require '../includes/scripts/connection.php';  
-    session_start();
-    
-    // Check if user is logged in and is ADMIN
-    if(isset($_SESSION['rgt_logedin_user_id']) && (trim($_SESSION['rgt_logedin_user_id']) !== '')){
-        $user_id = $_SESSION['rgt_logedin_user_id'];
-        $user_role = $_SESSION['rgt_logedin_user_role'];
-        if($user_role !== "ADMIN"){
-            header("Location: ../404.php");
-            exit();
-        }
-    } else {
-        header("Location: ../sign-in.php");
-        exit();
-    }
-    
-    // Handle Form Submission
+require_once 'includes/auth_check.php';
+
+// Check permission - only admin can edit products
+if (!$is_admin) {
+    $_SESSION['error'] = 'You do not have permission to edit products.';
+    header('Location: products.php');
+    exit;
+}
+
+// Handle Form Submission
     if($_SERVER["REQUEST_METHOD"] == "POST"){
 
         $dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
