@@ -17,7 +17,7 @@ if (!$is_admin) {
         $selling_price = $_POST['selling_price'];
         $initial_quantity = $_POST['initial_quantity']; // current_stock
   
-        if(empty($company_id) || empty($product_name) || empty($purchase_price) || empty($selling_price) || !isset($initial_quantity)){    // isset for quantity because it can be 0
+        if(empty($company_id) || empty($product_name) || empty($purchase_price) || empty($selling_price) ){    // isset for quantity because it can be 0
             print_r($_POST);
             die("All fields are required.");
         }

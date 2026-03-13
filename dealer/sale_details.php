@@ -137,12 +137,22 @@ $items = $items_stmt->get_result();
                     <span>Back to Sales</span>
                 </a>
 
-                <a href="print_bill.php?sale_id=<?= $sale_id ?>" 
-                   target="_blank"
-                   class="inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
-                    <i class="fas fa-print"></i>
-                    <span>Print Bill</span>
-                </a>
+                <div class="flex items-center gap-2">
+                    <?php $detail_mobile = preg_replace('/\D+/', '', (string)($sale['mobile_no'] ?? '')); ?>
+                    <button onclick="shareCurrentBillToWhatsapp(<?= (int)$sale_id ?>, '<?= htmlspecialchars($detail_mobile, ENT_QUOTES) ?>')"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                            title="Share bill on WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>Share WhatsApp</span>
+                    </button>
+
+                    <a href="print_bill.php?sale_id=<?= $sale_id ?>" 
+                    target="_blank"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                        <i class="fas fa-print"></i>
+                        <span>Print Bill</span>
+                    </a>
+                </div>
                
             </div>
 
@@ -257,6 +267,20 @@ $items = $items_stmt->get_result();
     </div>
 
     <script>
+        function shareCurrentBillToWhatsapp(saleId, mobileNo) {
+    if (!mobileNo) {
+        alert('Mobile number is not available for this sale.');
+        return;
+    }
+
+    const cleanPhone = String(mobileNo).replace(/\D/g, '');
+    const billUrl = `${window.location.origin}${window.location.pathname.replace('sale_details.php', 'print_bill.php')}?sale_id=${saleId}`;
+    const message = `Hello, here is your bill: ${billUrl}`;
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappUrl, '_blank');
+}
+
         // Profile dropdown
         const profileDropdown = document.getElementById('profileDropdown');
         const profileMenu = document.getElementById('profileMenu');

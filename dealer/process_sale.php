@@ -22,6 +22,7 @@ $delivery_status = $_POST['delivery_status'] ?? null;
 $products        = $_POST['products'] ?? [];
 $final_amount    = (float) ($_POST['final_amount'] ?? 0);
 $discount_amount = (float) ($_POST['discount_amount'] ?? 0);
+$mobile      = $_POST['mobile'] ?? null;
 
 if (
     !$sale_date || !$billing_type || !$payment_mode || !$delivery_status ||
@@ -150,12 +151,12 @@ try {
 
     $stmt = $conn->prepare("
         INSERT INTO sales
-        (dealer_id, sale_date, billing_type, bill_amount, total_amount, payment_mode, profit, delivery)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (dealer_id, sale_date, billing_type, bill_amount, total_amount, payment_mode, profit, delivery,mobile_no)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)
     ");
 
     $stmt->bind_param(
-        "issidsss",
+        "issidsssi",
         $dealer_id,
         $sale_date,
         $billing_type,
@@ -163,7 +164,8 @@ try {
         $total_amount,
         $payment_mode,
         $total_profit,
-        $delivery_status
+        $delivery_status,
+        $mobile
     );
 
     $stmt->execute();

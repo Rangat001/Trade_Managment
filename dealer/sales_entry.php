@@ -174,6 +174,14 @@ $stmt->close();
                                 <option value="DELIVERED">Delivered</option>
                             </select>
                         </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Mobile No
+                            </label>
+                            <input type="number" name="mobile" id="mobile" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
+                        </div>
                     </div>
                 </div>
 

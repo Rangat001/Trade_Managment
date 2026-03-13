@@ -14,24 +14,32 @@ $sql = "
     SELECT 
         c.id,
         c.company_name,
-        COALESCE(
-            SUM(
-                CASE 
-                    WHEN ct.type = 'CREDIT' THEN ct.amount
-                    ELSE 0
-                END
-            ), 0
+        (
+            COALESCE((
+                SELECT SUM(ct.amount)
+                FROM company_transactions ct
+                WHERE ct.company_id = c.id
+                AND ct.dealer_id = ?
+                AND ct.type = 'DEBIT'
+            ), 0)
+
+            -
+
+            COALESCE((
+                SELECT SUM(poi.total_price)
+                FROM purchase_order_items poi
+                JOIN purchase_orders po ON po.id = poi.order_id
+                WHERE po.company_id = c.id
+                AND po.dealer_id = ?
+            ), 0)
         ) AS balance
+
     FROM companies c
-    LEFT JOIN company_transactions ct
-        ON ct.company_id = c.id
-        AND ct.dealer_id = ?
     WHERE c.dealer_id = ?
-    GROUP BY c.id
 ";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("ii", $dealer_id, $dealer_id);
+$stmt->bind_param("iii", $dealer_id, $dealer_id, $dealer_id);
 $stmt->execute();
 $res = $stmt->get_result();
 
@@ -211,7 +219,7 @@ $stmt->close();
                 <div class="bg-white rounded-2xl shadow-sm border p-6 mb-6">
                 <div class="flex justify-between mb-4">
                     <h3 class="text-lg font-semibold">
-                        <i class="fas fa-boxes text-indigo-600"></i> Goods Received
+                        <i class="fas fa-boxes text-indigo-600"></i> Goods Order
                     </h3>
                     <button type="button" onclick="addProductRow()"
                             class="px-4 py-2 bg-indigo-600 text-white rounded-lg">
@@ -300,9 +308,9 @@ $stmt->close();
             const preview = document.getElementById('companyBalancePreview');
 
             if (bal < 0) {
-                preview.innerHTML = `<span class="text-red-600">Debit -₹${Math.abs(bal)}</span>`;
+                preview.innerHTML = `<span class="text-red-600"> -₹${Math.abs(bal)}</span>`;
             } else if (bal > 0) {
-                preview.innerHTML = `<span class="text-green-600">Credit +₹${bal}</span>`;
+                preview.innerHTML = `<span class="text-green-600"> +₹${bal}</span>`;
             } else {
                 preview.innerHTML = `<span class="text-gray-700">₹${bal}</span>`;
             }

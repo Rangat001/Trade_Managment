@@ -172,6 +172,7 @@ require_once 'includes/auth_check.php';
                                         s.bill_amount,
                                         s.profit,
                                         s.total_amount,
+                                        s.mobile_no,
                                         COUNT(si.id) AS item_count,
                                         SUM(si.quantity) AS total_quantity
                                     FROM sales s
@@ -237,13 +238,25 @@ require_once 'includes/auth_check.php';
                                 <td class="py-4 px-6 text-sm text-gray-500">
                                     <button onclick="window.location.href='sale_details.php?id=<?= $row['sale_id'] ?>'" 
                                             class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors">
-                                        <i class="fas fa-eye"></i> View
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+
+                                    <?php
+                                        $mobile_no = preg_replace('/\D+/', '', (string)($row['mobile_no'] ?? ''));
+                                    ?>
+                                    <button onclick="shareBillToWhatsapp(<?= (int)$row['sale_id'] ?>, '<?= htmlspecialchars($mobile_no, ENT_QUOTES) ?>')"
+                                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-lg transition-colors"
+                                            title="Share bill on WhatsApp">
+                                        <i class="fab fa-whatsapp"></i>
                                     </button>
 
                                     <button onclick="deleteSale(<?= $row['sale_id'] ?>)" 
                                             class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
-                                        <i class="fas fa-trash"></i> Delete
+                                        <i class="fas fa-trash"></i> 
+
                                     </button>
+
+                                    
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -427,7 +440,24 @@ require_once 'includes/auth_check.php';
         
         window.addEventListener('resize', handleResize);
         handleResize();
+
+        function shareBillToWhatsapp(saleId, mobileNo) {
+            if (!mobileNo) {
+                alert('Mobile number is not available for this sale.');
+                return;
+            }
+
+            const cleanPhone = String(mobileNo).replace(/\D/g, '');
+            const billUrl = `${window.location.origin}${window.location.pathname.replace('sales.php', 'print_bill.php')}?sale_id=${saleId}`;
+            const message = `Hello, here is your bill: ${billUrl}`;
+            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+
+            window.open(whatsappUrl, '_blank');
+        }
     </script>
+
+        
+
 
 </body>
 </html>
