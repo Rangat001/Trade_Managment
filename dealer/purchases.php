@@ -283,6 +283,22 @@ require_once 'includes/auth_check.php';
     <script src="../asset/js/script.js"></script>
 
     <script>
+
+        const profileDropdown = document.getElementById('profileDropdown');
+        const profileMenu = document.getElementById('profileMenu');
+
+        profileDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileMenu.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
+                profileMenu.classList.add('hidden');
+            }
+        });
+        
         // Modal Functions
         function openAddPurchaseModal() {
             document.getElementById('addPurchaseModal').classList.remove('hidden');
@@ -388,6 +404,9 @@ function markAsReceived(orderId) {
         alert("Network error: " + err.message);
     });
 }
+
+    
+
     </script>
 
 </body>

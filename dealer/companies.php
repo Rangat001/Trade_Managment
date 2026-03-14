@@ -50,9 +50,11 @@ require_once 'includes/auth_check.php';
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed left-0 top-0 w-64 h-screen bg-white border-r border-gray-200 transition-transform duration-300 z-50">
         <div class="px-6 py-6 border-b border-gray-200">
+
             <h2 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 DealerPro
             </h2>
+
         </div>
         
         <nav class="p-3 mt-4">
@@ -435,6 +437,22 @@ require_once 'includes/auth_check.php';
         
         window.addEventListener('resize', handleResize);
         handleResize();
+
+        const profileDropdown = document.getElementById('profileDropdown');
+        const profileMenu = document.getElementById('profileMenu');
+
+        profileDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileMenu.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
+                profileMenu.classList.add('hidden');
+            }
+        });
+        
     </script>
 
 </body>

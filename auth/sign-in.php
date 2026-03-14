@@ -1,7 +1,7 @@
 <?php 
  session_start();
  if (isset($_SESSION['rgt_logedin_user_id']) && trim($_SESSION['rgt_logedin_user_id']) !== '') {
-	header('Location: dealer/dashboard.php');
+	header('Location: ../dealer/dashboard.php');
 	exit;
 }
 ?>
