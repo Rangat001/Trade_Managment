@@ -81,7 +81,7 @@ require_once 'includes/auth_check.php';
                     <button id="profileDropdown" class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
                         <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
                              alt="Profile" class="w-9 h-9 rounded-full">
-                        <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
+                        <span class="font-medium text-gray-700 hidden sm:block">Dealer <?php echo($_SESSION['rgt_logedin_user_role']); ?></span>
                         <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
                     </button>
 
@@ -103,28 +103,43 @@ require_once 'includes/auth_check.php';
             
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <!-- Total Products -->
+                <!-- Total Expense -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                     <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                            <i class="fas fa-box text-white text-2xl"></i>
+                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-white-500 to-gray-600 flex items-center justify-center">
+                            <img src="../asset/img/icons/expense.png" alt="Total Expense" class="w-12 h-12 object-contain">
                         </div>
                         <div>
-                            <h3 class="text-3xl font-bold text-gray-900">Total Product Count</h3>
-                            <p class="text-sm font-medium text-gray-500">Total Products</p>
+                            <?php
+                            $sale_stmt = $conn->prepare("SELECT SUM(amount) AS expense FROM company_transactions WHERE dealer_id = ? AND type = 'DEBIT'");
+                            $sale_stmt->bind_param("i", $dealer_id);
+                            $sale_stmt->execute();
+                            $sale_result = $sale_stmt->get_result();
+                            $sale_data = $sale_result->fetch_assoc();
+                            ?>
+                            <h3 class="text-3xl font-bold text-gray-900">₹ <?php echo number_format($sale_data['expense']); ?></h3>
+                            <p class="text-sm font-medium text-gray-500">Total Expense</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Total Staff -->
+                <!-- Total Revenue -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                     <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-                            <i class="fas fa-users text-white text-2xl"></i>
+                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-white-500 to-gray-600 flex items-center justify-center">
+                            <img src="../asset/img/icons/revenue.png" alt="Total Revenue" class="w-12 h-12 object-contain">
                         </div>
                         <div>
-                            <h3 class="text-3xl font-bold text-gray-900">8</h3>
-                            <p class="text-sm font-medium text-gray-500">Total Staff</p>
+                            <?php
+                            $sale_stmt = $conn->prepare("SELECT SUM(total_amount) AS revenue FROM sales WHERE dealer_id = ? ");
+                            $sale_stmt->bind_param("i", $dealer_id);
+                            $sale_stmt->execute();
+                            $sale_result = $sale_stmt->get_result();
+                            $sale_data = $sale_result->fetch_assoc();
+                            ?>
+
+                            <h3 class="text-3xl font-bold text-gray-900">₹ <?php echo number_format($sale_data['revenue']); ?></h3>
+                            <p class="text-sm font-medium text-gray-500">Total Revenue</p>
                         </div>
                     </div>
                 </div>
@@ -132,11 +147,23 @@ require_once 'includes/auth_check.php';
                 <!-- Total Sales -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                     <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
-                            <i class="fas fa-shopping-bag text-white text-2xl"></i>
+                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-white-500 to-gray-600 flex items-center justify-center">
+                            <img src="../asset/img/icons/sales.png" alt="Total Sales" class="w-12 h-12 object-contain">
                         </div>
                         <div>
-                            <h3 class="text-3xl font-bold text-gray-900">1,245</h3>
+                             <?php
+                                $sale_stmt = $conn->prepare(
+                                    "SELECT COUNT(*) AS total_sales
+                                     FROM sales s
+                                     INNER JOIN sale_items si ON si.sale_id = s.id
+                                     WHERE s.dealer_id = ?"
+                                );                                
+                                $sale_stmt->bind_param("i", $dealer_id);
+                                $sale_stmt->execute();
+                                $sale_result = $sale_stmt->get_result();
+                                $sale_data = $sale_result->fetch_assoc();
+                            ?>
+                            <h3 class="text-3xl font-bold text-gray-900"><?php echo $sale_data['total_sales']; ?></h3>
                             <p class="text-sm font-medium text-gray-500">Total Sales</p>
                         </div>
                     </div>
@@ -145,11 +172,18 @@ require_once 'includes/auth_check.php';
                 <!-- Total Profit -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                     <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                            <i class="fas fa-dollar-sign text-white text-2xl"></i>
+                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-white-500 to-gray-600 flex items-center justify-center">
+                            <img src="../asset/img/icons/profit.png" alt="Total Profit" class="w-13 h-13 object-contain">
                         </div>
                         <div>
-                            <h3 class="text-3xl font-bold text-gray-900">₹45,280</h3>
+                            <?php
+                            $sale_stmt = $conn->prepare("SELECT SUM(profit) AS total_profit FROM sales WHERE dealer_id = ? ");
+                            $sale_stmt->bind_param("i", $dealer_id);
+                            $sale_stmt->execute();
+                            $sale_result = $sale_stmt->get_result();
+                            $sale_data = $sale_result->fetch_assoc();
+                            ?>
+                            <h3 class="text-3xl font-bold text-gray-900">₹ <?php echo number_format($sale_data['total_profit']); ?> </h3>
                             <p class="text-sm font-medium text-gray-500">Total Profit</p>
                         </div>
                     </div>
@@ -162,7 +196,7 @@ require_once 'includes/auth_check.php';
                 <!-- Top Selling Products -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="px-6 py-5 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-900">Top 5 Selling Products</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Top 5 Least(Qty) Products</h3>
                     </div>
                     <div class="p-6">
                         <div class="overflow-x-auto">
@@ -170,94 +204,170 @@ require_once 'includes/auth_check.php';
                                 <thead>
                                     <tr class="border-b border-gray-200">
                                         <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Name</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qty Sold</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Revenue</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Company</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qty</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200">
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-4 text-sm text-gray-900">Rice (1kg)</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">450</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">₹29,250</td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-4 text-sm text-gray-900">Wheat Flour (1kg)</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">380</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">₹22,040</td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-4 text-sm text-gray-900">Sugar (1kg)</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">320</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">₹17,600</td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-4 text-sm text-gray-900">Cooking Oil (1L)</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">250</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">₹36,250</td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-4 text-sm text-gray-900">Tea Powder (250g)</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">200</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">₹21,000</td>
-                                    </tr>
+                                    <?php 
+                                        $sale_stmt = $conn->prepare("SELECT p.product_name, p.current_stock, p.base_price , c.company_name FROM products p JOIN companies c ON p.company_id = c.id WHERE p.dealer_id = ? ORDER BY current_stock ASC LIMIT 5 ");
+                                        $sale_stmt->bind_param("i", $dealer_id);
+                                        $sale_stmt->execute();
+                                        $sale_result = $sale_stmt->get_result();
+                                        while($row = $sale_result->fetch_assoc()) {
+                                            echo '<tr class="hover:bg-gray-50 transition-colors">
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['product_name'].'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['company_name'].'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['current_stock'].'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">₹ '.number_format($row['base_price']).'</td>
+                                            </tr>';
+                                        }
+                                    ?>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
+                
 
-                <!-- Recent Sales -->
+                <!-- Recent Purchases -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="px-6 py-5 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-900">Recent Sales</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">5 Recent Purchases</h3>
                     </div>
                     <div class="p-6">
                         <div class="overflow-x-auto">
                             <table class="w-full">
                                 <thead>
                                     <tr class="border-b border-gray-200">
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Invoice #</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Company</th>
                                         <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qty</th>
                                         <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
                                         <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200">
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-4 text-sm text-gray-900">INV-1245</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">Rice (1kg)</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">₹650</td>
-                                        <td class="py-4 px-4 text-sm text-gray-500">Feb 5, 2:30 PM</td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-4 text-sm text-gray-900">INV-1244</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">Cooking Oil (1L)</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">₹435</td>
-                                        <td class="py-4 px-4 text-sm text-gray-500">Feb 5, 1:15 PM</td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-4 text-sm text-gray-900">INV-1243</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">Sugar (1kg)</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">₹275</td>
-                                        <td class="py-4 px-4 text-sm text-gray-500">Feb 5, 11:45 AM</td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-4 text-sm text-gray-900">INV-1242</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">Tea Powder (250g)</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">₹315</td>
-                                        <td class="py-4 px-4 text-sm text-gray-500">Feb 5, 10:20 AM</td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-4 text-sm text-gray-900">INV-1241</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">Wheat Flour (1kg)</td>
-                                        <td class="py-4 px-4 text-sm text-gray-900">₹580</td>
-                                        <td class="py-4 px-4 text-sm text-gray-500">Feb 5, 9:00 AM</td>
-                                    </tr>
+                                    <?php 
+                                        $purchase_stmt = $conn->prepare("SELECT c.company_name, p.product_name, pu.quantity, pu.total_price, po.order_date FROM purchase_orders po JOIN purchase_order_items pu ON po.id = pu.order_id JOIN products p ON pu.product_id = p.id JOIN companies c ON p.company_id = c.id WHERE po.dealer_id = ? ORDER BY po.order_date DESC LIMIT 5");
+                                        $purchase_stmt->bind_param("i", $dealer_id);
+                                        $purchase_stmt->execute();
+                                        $purchase_result = $purchase_stmt->get_result();
+                                        while($row = $purchase_result->fetch_assoc()) {
+                                            echo '<tr class="hover:bg-gray-50 transition-colors">
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['company_name'].'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['product_name'].'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['quantity'].'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">₹ '.number_format($row['total_price']).'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.date('d M Y', strtotime($row['order_date'])).'</td>
+                                            </tr>';
+                                        }
+                                    ?>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
+
+                <!-- Best Selling Products -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Top 5 Best Seller</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Company</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <?php 
+                                        $purchase_stmt = $conn->prepare("SELECT
+                                                            p.id AS product_id,
+                                                            p.product_name,
+                                                            c.company_name,
+                                                            SUM(si.quantity) AS total_qty_sold,
+                                                            SUM(si.quantity * si.selling_price) AS total_revenue
+                                                        FROM sale_items si
+                                                        JOIN sales s     ON si.sale_id = s.id
+                                                        JOIN products p  ON si.product_id = p.id
+                                                        JOIN companies c ON p.company_id = c.id
+                                                        WHERE s.dealer_id = ?
+                                                        GROUP BY p.id, p.product_name, c.company_name
+                                                        ORDER BY total_qty_sold DESC
+                                                        LIMIT 5;");
+                                        $purchase_stmt->bind_param("i", $dealer_id);
+                                        $purchase_stmt->execute();
+                                        $purchase_result = $purchase_stmt->get_result();
+                                        while($row = $purchase_result->fetch_assoc()) {
+                                            echo '<tr class="hover:bg-gray-50 transition-colors">
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['company_name'].'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['product_name'].'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['total_qty_sold'].'</td>
+                                            </tr>';
+                                        }
+                                    ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Selling -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Recent Selling</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Bill No.</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qty</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <?php 
+                                        $purchase_stmt = $conn->prepare("SELECT
+                                                        s.id  AS sale_id,
+                                                        p.product_name,
+                                                        si.quantity,
+                                                        (si.quantity * si.selling_price) AS amount,
+                                                        s.sale_date
+                                                    FROM sales s
+                                                    JOIN sale_items si ON si.sale_id = s.id
+                                                    JOIN products p    ON si.product_id = p.id
+                                                    WHERE s.dealer_id = ?
+                                                    ORDER BY s.sale_date DESC
+                                                    LIMIT 5;");
+                                        $purchase_stmt->bind_param("i", $dealer_id);
+                                        $purchase_stmt->execute();
+                                        $purchase_result = $purchase_stmt->get_result();
+                                        while($row = $purchase_result->fetch_assoc()) {
+                                            echo '<tr class="hover:bg-gray-50 transition-colors">
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.'BL'.str_pad($row['sale_id'], 6, '0', STR_PAD_LEFT).'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['sale_date'].'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['product_name'].'</td>
+                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['quantity'].'</td>
+                                            </tr>';
+                                        }
+                                    ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+
 
             </div>
 

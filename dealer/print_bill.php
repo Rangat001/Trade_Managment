@@ -1,14 +1,10 @@
 <?php
-require_once 'includes/auth_check.php';
+// require_once 'includes/auth_check.php';
 require_once '../vendor/autoload.php';
-
+require '../includes/scripts/connection.php';
 use Mpdf\Mpdf;
 
-if (!isset($_SESSION['rgt_logedin_user_dealer_id'])) {
-    die('Unauthorized');
-}
 
-$dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
 $sale_id   = (int) ($_GET['sale_id'] ?? 0);
 
 if ($sale_id <= 0) {
@@ -19,25 +15,16 @@ if ($sale_id <= 0) {
    FETCH SALE DATA
 ================================ */
 
-$dealerStmt = $conn->prepare("
-    SELECT business_name
-    FROM dealer
-    WHERE id = ?
-");
 
-$dealerStmt->bind_param("i", $dealer_id);
-$dealerStmt->execute();
-$dealer = $dealerStmt->get_result()->fetch_assoc();
-$dealerStmt->close();
 
 
 $saleStmt = $conn->prepare("
     SELECT *
     FROM sales
-    WHERE id = ? AND dealer_id = ? AND is_deleted = 0
+    WHERE id = ? AND is_deleted = 0
 ");
 
-$saleStmt->bind_param("ii", $sale_id, $dealer_id);
+$saleStmt->bind_param("i", $sale_id);
 $saleStmt->execute();
 $sale = $saleStmt->get_result()->fetch_assoc();
 $saleStmt->close();
@@ -45,6 +32,18 @@ $saleStmt->close();
 if (!$sale) {
     die('Sale not found');
 }
+
+$dealerStmt = $conn->prepare("
+    SELECT business_name
+    FROM dealer
+    WHERE id = ?
+");
+
+$dealerStmt->bind_param("i", $sale["dealer_id"]);
+$dealerStmt->execute();
+$dealer = $dealerStmt->get_result()->fetch_assoc();
+$dealerStmt->close();
+
 
 /* ===============================
    FETCH SALE ITEMS

@@ -13,8 +13,8 @@ require_once __DIR__ . '/../../includes/scripts/connection.php';
 // Check if user is logged in
 if (isset($_SESSION['rgt_logedin_user_id']) && (trim($_SESSION['rgt_logedin_user_id']) !== '')) {
     $user_id = $_SESSION['rgt_logedin_user_id'];
-    $user_role = $_SESSION['rgt_logedin_user_role'] ?? 'STAFF';
-    $user_name = $_SESSION['rgt_logedin_user_name'] ?? 'User';
+    $user_role = $_SESSION['rgt_logedin_user_role'];
+    $user_name = $_SESSION['rgt_logedin_user_name'];
     $dealer_id = $_SESSION['rgt_logedin_user_dealer_id'] ?? null;
     
     // Validate role - only ADMIN and STAFF allowed

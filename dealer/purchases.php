@@ -104,7 +104,7 @@ require_once 'includes/auth_check.php';
                     <button id="profileDropdown" class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
                         <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
                              alt="Profile" class="w-9 h-9 rounded-full">
-                        <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
+                        <span class="font-medium text-gray-700 hidden sm:block">Dealer <? echo($_SESSION['rgt_logedin_user_role']); ?></span>
                         <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
                     </button>
 
