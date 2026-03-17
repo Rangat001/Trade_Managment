@@ -76,22 +76,38 @@ require_once 'includes/auth_check.php';
                     </button>
                     <h1 class="text-2xl font-semibold text-gray-900">Reports</h1>
                 </div>
-                
-                <div class="relative">
-                    <button id="profileDropdown" class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
-                        <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
-                             alt="Profile" class="w-9 h-9 rounded-full">
-                        <span class="font-medium text-gray-700 hidden sm:block">Dealer <?php echo($_SESSION['rgt_logedin_user_role']); ?></span>
-                        <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
-                    </button>
 
-                    <!-- Dropdown Menu -->
-                    <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                        
-                        <a href="logout.php" class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </a>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <button id="exportDropdown" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-full shadow hover:shadow-md transition-all">
+                            <i class="fas fa-file-export text-sm"></i>
+                            <span class="font-medium hidden sm:block">Export</span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        <div id="exportMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                            <button class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50">Sales (Excel)</button>
+                            <button class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50">Purchases (Excel)</button>
+                            <button class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50">Profit Summary (Excel)</button>
+                            <button class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50">Stock Levels (Excel)</button>
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <button id="profileDropdown" class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
+                            <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
+                                 alt="Profile" class="w-9 h-9 rounded-full">
+                            <span class="font-medium text-gray-700 hidden sm:block">Dealer <?php echo($_SESSION['rgt_logedin_user_role']); ?></span>
+                            <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                            
+                            <a href="logout.php" class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -117,14 +133,39 @@ require_once 'includes/auth_check.php';
                             Sales Summary
                         </h3>
                     </div>
+
                     <div class="p-6 space-y-4">
                         <div class="flex justify-between items-center pb-3 border-b border-gray-200">
                             <span class="text-sm text-gray-600">Total Sales</span>
-                            <strong class="text-lg text-gray-900">₹126,140</strong>
+
+                            <!-- sale count -->
+                            <?php
+                                $sale_stmt = $conn->prepare(
+                                    "SELECT COUNT(*) AS total_sales
+                                     FROM sales s
+                                     INNER JOIN sale_items si ON si.sale_id = s.id
+                                     WHERE s.dealer_id = ?"
+                                );                                
+                                $sale_stmt->bind_param("i", $dealer_id);
+                                $sale_stmt->execute();
+                                $sale_result = $sale_stmt->get_result();
+                                $sale_data = $sale_result->fetch_assoc();
+                            ?>
+                            
+                            <!-- Revenue -->
+                            <?php
+                                $sale_stmt = $conn->prepare("SELECT SUM(total_amount) AS revenue FROM sales WHERE dealer_id = ? ");
+                                $sale_stmt->bind_param("i", $dealer_id);
+                                $sale_stmt->execute();
+                                $sale_result = $sale_stmt->get_result();
+                                $sale = $sale_result->fetch_assoc();
+                            ?>
+                            <strong class="text-lg text-gray-900">₹<?php echo number_format($sale['revenue'], 2); ?></strong>
                         </div>
+
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Total Transactions</span>
-                            <strong class="text-lg text-gray-900">1,245</strong>
+                            <strong class="text-lg text-gray-900"><?php echo $sale_data['total_sales']; ?></strong>
                         </div>
                     </div>
                 </div>
@@ -138,13 +179,28 @@ require_once 'includes/auth_check.php';
                         </h3>
                     </div>
                     <div class="p-6 space-y-4">
+                        <?php
+                            $sale_stmt = $conn->prepare("SELECT SUM(amount) AS expense FROM company_transactions WHERE dealer_id = ? AND type = 'DEBIT'");
+                            $sale_stmt->bind_param("i", $dealer_id);
+                            $sale_stmt->execute();
+                            $sale_result = $sale_stmt->get_result();
+                            $expense = $sale_result->fetch_assoc();
+                        ?>
                         <div class="flex justify-between items-center pb-3 border-b border-gray-200">
                             <span class="text-sm text-gray-600">Total Purchases</span>
-                            <strong class="text-lg text-gray-900">₹80,860</strong>
+                            <strong class="text-lg text-gray-900">₹<?php echo number_format($expense['expense'], 2); ?></strong>
                         </div>
+
                         <div class="flex justify-between items-center">
+                        <?php
+                            $sale_stmt = $conn->prepare("SELECT COUNT(*) AS purchase_count FROM purchase_orders WHERE dealer_id = ?");
+                            $sale_stmt->bind_param("i", $dealer_id);
+                            $sale_stmt->execute();
+                            $sale_result = $sale_stmt->get_result();
+                            $purchase = $sale_result->fetch_assoc();
+                        ?>
                             <span class="text-sm text-gray-600">Total Entries</span>
-                            <strong class="text-lg text-gray-900">156</strong>
+                            <strong class="text-lg text-gray-900"><?php echo $purchase['purchase_count']; ?></strong>
                         </div>
                     </div>
                 </div>
@@ -159,12 +215,24 @@ require_once 'includes/auth_check.php';
                     </div>
                     <div class="p-6 space-y-4">
                         <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                            <?php
+                                $sale_stmt = $conn->prepare("SELECT SUM(profit) AS total_profit FROM sales WHERE dealer_id = ? ");
+                                $sale_stmt->bind_param("i", $dealer_id);
+                                $sale_stmt->execute();
+                                $sale_result = $sale_stmt->get_result();
+                                $profit = $sale_result->fetch_assoc();
+                            ?>
                             <span class="text-sm text-gray-600">Total Profit</span>
-                            <strong class="text-lg text-green-600">₹45,280</strong>
+                            <strong class="text-lg text-green-600">₹<?php echo number_format($profit['total_profit'], 2); ?></strong>
                         </div>
                         <div class="flex justify-between items-center">
+                            <?php
+                                $revenue = isset($sale['revenue']) ? (float)$sale['revenue'] : 0;
+                                $totalProfit = isset($profit['total_profit']) ? (float)$profit['total_profit'] : 0;
+                                $profitMargin = $revenue > 0 ? ($totalProfit / $revenue) * 100 : 0;
+                            ?>
                             <span class="text-sm text-gray-600">Profit Margin</span>
-                            <strong class="text-lg text-gray-900">35.89%</strong>
+                            <strong class="text-lg text-gray-900"><?php echo number_format($profitMargin, 2); ?>%</strong>
                         </div>
                     </div>
                 </div>
@@ -178,13 +246,28 @@ require_once 'includes/auth_check.php';
                         </h3>
                     </div>
                     <div class="p-6 space-y-4">
+                       
                         <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                            <?php
+                            $sale_stmt = $conn->prepare("SELECT COUNT(*) AS products FROM products WHERE dealer_id = ?");
+                            $sale_stmt->bind_param("i", $dealer_id);
+                            $sale_stmt->execute();
+                            $sale_result = $sale_stmt->get_result();
+                            $products = $sale_result->fetch_assoc();
+                            ?>
                             <span class="text-sm text-gray-600">Total Products</span>
-                            <strong class="text-lg text-gray-900">124</strong>
+                            <strong class="text-lg text-gray-900"><?php echo $products['products']; ?></strong>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Low Stock Items</span>
-                            <strong class="text-lg text-amber-600">8</strong>
+                            <?php
+                            $sale_stmt = $conn->prepare("SELECT COUNT(*) AS low_stock_products FROM products WHERE dealer_id = ? AND current_stock < 10");
+                            $sale_stmt->bind_param("i", $dealer_id);
+                            $sale_stmt->execute();
+                            $sale_result = $sale_stmt->get_result();
+                            $products = $sale_result->fetch_assoc();
+                            ?>
+                            <strong class="text-lg text-amber-600"><?php echo $products['low_stock_products']; ?></strong>
                         </div>
                     </div>
                 </div>
@@ -201,36 +284,37 @@ require_once 'includes/auth_check.php';
                     </div>
                     <div class="p-6">
                         <div class="space-y-4">
+                            <?php
+                                $monthly_stmt = $conn->prepare(
+                                    "SELECT DATE_FORMAT(s.sale_date, '%b %Y') AS month_label,
+                                            SUM(s.total_amount) AS revenue,
+                                            SUM(s.profit) AS profit
+                                     FROM sales s
+                                     WHERE s.dealer_id = ?
+                                     GROUP BY YEAR(s.sale_date), MONTH(s.sale_date)
+                                     ORDER BY YEAR(s.sale_date) DESC, MONTH(s.sale_date) DESC
+                                     LIMIT 5"
+                                );
+                                $monthly_stmt->bind_param("i", $dealer_id);
+                                $monthly_stmt->execute();
+                                $monthly_result = $monthly_stmt->get_result();
+                                while ($row = $monthly_result->fetch_assoc()) {
+                                    $rev = isset($row['revenue']) ? (float)$row['revenue'] : 0;
+                                    $prof = isset($row['profit']) ? (float)$row['profit'] : 0;
+                            ?>
                             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                                 <div>
-                                    <p class="text-sm text-gray-600">January 2026</p>
-                                    <p class="text-xl font-bold text-gray-900 mt-1">₹28,450</p>
+                                    <p class="text-sm text-gray-600"><?php echo $row['month_label']; ?></p>
+                                    <p class="text-xl font-bold text-gray-900 mt-1">₹<?php echo number_format($rev, 2); ?></p>
                                 </div>
                                 <div class="text-right">
                                     <p class="text-sm text-gray-600">Profit</p>
-                                    <p class="text-lg font-semibold text-green-600 mt-1">₹9,240</p>
+                                    <p class="text-lg font-semibold text-green-600 mt-1">₹<?php echo number_format($prof, 2); ?></p>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                <div>
-                                    <p class="text-sm text-gray-600">December 2025</p>
-                                    <p class="text-xl font-bold text-gray-900 mt-1">₹32,680</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-sm text-gray-600">Profit</p>
-                                    <p class="text-lg font-semibold text-green-600 mt-1">₹11,520</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                <div>
-                                    <p class="text-sm text-gray-600">November 2025</p>
-                                    <p class="text-xl font-bold text-gray-900 mt-1">₹29,340</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-sm text-gray-600">Profit</p>
-                                    <p class="text-lg font-semibold text-green-600 mt-1">₹10,180</p>
-                                </div>
-                            </div>
+                            <?php }
+                                $monthly_stmt->close();
+                            ?>
                         </div>
                     </div>
                 </div>
@@ -242,27 +326,34 @@ require_once 'includes/auth_check.php';
                     </div>
                     <div class="p-6">
                         <div class="space-y-3">
+                            <?php
+                                $low_stmt = $conn->prepare(
+                                    "SELECT product_name, current_stock
+                                     FROM products
+                                     WHERE dealer_id = ?
+                                     ORDER BY current_stock DESC
+                                     LIMIT 3"
+                                );
+                                $low_stmt->bind_param("i", $dealer_id);
+                                $low_stmt->execute();
+                                $low_result = $low_stmt->get_result();
+                                while ($row = $low_result->fetch_assoc()) {
+                                    $stock = isset($row['current_stock']) ? (int)$row['current_stock'] : 0;
+                                    $badge = $stock <= 5 ? 'Critical' : 'Low';
+                                    $badge_class = $stock <= 5
+                                        ? 'px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700'
+                                        : 'px-3 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-700';
+                            ?>
                             <div class="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
                                 <div>
-                                    <p class="font-medium text-gray-900">Tea Powder (250g)</p>
-                                    <p class="text-sm text-gray-600 mt-1">Stock: 8 units</p>
+                                    <p class="font-medium text-gray-900"><?php echo htmlspecialchars($row['product_name']); ?></p>
+                                    <p class="text-sm text-gray-600 mt-1">Stock: <?php echo $stock; ?> units</p>
                                 </div>
-                                <span class="px-3 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">Low</span>
+                                <span class="<?php echo $badge_class; ?>"><?php echo $badge; ?></span>
                             </div>
-                            <div class="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                <div>
-                                    <p class="font-medium text-gray-900">Cooking Oil (1L)</p>
-                                    <p class="text-sm text-gray-600 mt-1">Stock: 5 units</p>
-                                </div>
-                                <span class="px-3 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full">Critical</span>
-                            </div>
-                            <div class="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                <div>
-                                    <p class="font-medium text-gray-900">Sugar (1kg)</p>
-                                    <p class="text-sm text-gray-600 mt-1">Stock: 9 units</p>
-                                </div>
-                                <span class="px-3 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">Low</span>
-                            </div>
+                            <?php }
+                                $low_stmt->close();
+                            ?>
                         </div>
                     </div>
                 </div>
@@ -276,16 +367,26 @@ require_once 'includes/auth_check.php';
 
         const profileDropdown = document.getElementById('profileDropdown');
         const profileMenu = document.getElementById('profileMenu');
+        const exportDropdown = document.getElementById('exportDropdown');
+        const exportMenu = document.getElementById('exportMenu');
 
         profileDropdown.addEventListener('click', (e) => {
             e.stopPropagation();
             profileMenu.classList.toggle('hidden');
         });
 
+        exportDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+            exportMenu.classList.toggle('hidden');
+        });
+
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
                 profileMenu.classList.add('hidden');
+            }
+            if (!exportDropdown.contains(e.target) && !exportMenu.contains(e.target)) {
+                exportMenu.classList.add('hidden');
             }
         });
         
