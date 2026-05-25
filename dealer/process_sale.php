@@ -99,11 +99,17 @@ try {
         $product = $stockRes->fetch_assoc();
 
         if (!$product) {
-            throw new Exception("Product not found or unauthorized");
+            $conn->rollback();
+            $_SESSION['sale_error'] = "Product not found or unauthorized";
+            header("Location: sales_entry.php");
+            exit;
         }
 
         if ($product['current_stock'] < $quantity) {
-            throw new Exception("Insufficient stock for product ID: $product_id");
+            $conn->rollback();
+            $_SESSION['sale_error'] = "Insufficient stock for product ID: $product_id";
+            header("Location: sales_entry.php");
+            exit;
         }
 
         // Reduce stock
@@ -112,11 +118,17 @@ try {
 
 
         if ($quantity <= 0 || $selling_price <= 0) {
-            throw new Exception('Invalid product values');
+            $conn->rollback();
+            $_SESSION['sale_error'] = "Invalid product values";
+            header("Location: sales_entry.php");
+            exit;
         }
 
         if (!isset($basePrices[$product_id])) {
-            throw new Exception('Invalid product selected');
+            $conn->rollback();
+            $_SESSION['sale_error'] = "Invalid product selected";
+            header("Location: sales_entry.php");
+            exit;
         }
 
         $base_price = $basePrices[$product_id];
@@ -136,9 +148,14 @@ try {
     // Discount reduces revenue, NOT base cost
     $bill = $total_amount;
 
-    if ($discount_amount > 0) {
+    if ($discount_amount >= 0 && $discount_amount < $total_amount && $discount_amount <= $total_profit) {
         $total_amount -= $discount_amount;
         if ($total_amount < 0) $total_amount = 0;
+    }else{
+        $conn->rollback();
+        $_SESSION['sale_error'] = "Invalid discount amount, amount must be between 0 and " . $total_amount . "and not exceed profit\n";
+        header("Location: sales_entry.php");
+        exit;
     }
 
     $total_profit = max(0, $total_profit - $discount_amount);
@@ -207,16 +224,20 @@ try {
 
     $conn->commit();
 
-    header("Location: sales.php?success=1");
+    if ($_POST['action'] === 'save_print') {
+    // Redirect to thermal print page
+        header("Location: print_bill_thermal.php?sale_id=" . $sale_id);
+    } else {
+        // Normal redirect to sales list
+        header("Location: sales.php?success=1");
+    }
+
     exit;
 
 } catch (Exception $e) {
 
     $conn->rollback();
-
-    echo "<pre>";
-    echo "SALE FAILED\n";
-    echo "ERROR: " . $e->getMessage() . "\n";
-    echo "</pre>";
+    $_SESSION['sale_error'] = "Sale failed: " . $e->getMessage();
+    header("Location: sales_entry.php");
     exit;
 }

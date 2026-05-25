@@ -152,6 +152,12 @@ $items = $items_stmt->get_result();
                         <i class="fas fa-print"></i>
                         <span>Print Bill</span>
                     </a>
+                    <a href="print_bill_thermal.php?sale_id=<?= $sale_id ?>" 
+                    target="_blank"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-white bg-gray-600 hover:bg-blue-700 rounded-lg transition-colors">
+                        <i class="fas fa-print"></i>
+                        <span>Print Bill Thermal</span>
+                    </a>
                 </div>
                
             </div>

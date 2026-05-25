@@ -151,9 +151,13 @@ require_once 'includes/auth_check.php';
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-200">
                                 <th>No.</th>
-                                <th>dealer_id</th>
-                                <th>Company Name</th>
                                 <th>Product Name</th>
+                                <th>Company Name</th>
+                                <th>HSN Code</th>
+                                <th>GST (%)</th>
+                                <th>Barcode</th>
+                                <th>Assurance</th>
+                                <th>Validity</th>
                                 <th>Base Price</th>
                                 <th>selling Price</th>
                                 <th>current stock</th>
@@ -173,9 +177,15 @@ require_once 'includes/auth_check.php';
                                             ?>
                                             <tr class="hover:bg-gray-50 transition-colors">
                                                 <td class="py-4 px-6 text-sm font-medium text-gray-900"><?php echo $row['id']; ?></td>
-                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['dealer_id']; ?></td>
-                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['company_name']; ?></td>
                                                 <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['product_name']; ?></td>
+                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['company_name']; ?></td>
+                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['HSN'] ; ?></td>
+                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['GST'] ; ?></td>
+                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['Barcode'] ; ?></td>
+                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['assurance'] ; ?></td>      
+                                                <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['VALIDITY'] ; ?></td>      
+                                                
+                                                
                                                 <td class="py-4 px-6 text-sm text-gray-900">₹<?php echo number_format($row['base_price'], 2); ?></td>
                                                 <td class="py-4 px-6 text-sm text-gray-900">₹<?php echo number_format($row['selling_price'], 2); ?></td>
                                                 <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['current_stock']; ?></td>
@@ -242,18 +252,53 @@ require_once 'includes/auth_check.php';
                             ?>
                         </select>
                     </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">HSN CODE</label>
+                        <input type="text" name="hsn_code" required 
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Barcode No</label>
+                        <input type="number" name="barcode_no" min="0" steps="1" required 
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">GST (%)</label>
+                        <input type="number" name="gst" min="0" steps="1" required 
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                    </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Purchase Price (₹)</label>
-                        <input type="number" name="purchase_price" step="0.01" min="0" required 
+                        <input type="number" name="purchase_price" step="10" min="0" required 
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Selling Price (₹)</label>
-                        <input type="number" name="selling_price" step="0.01" min="0" required 
+                        <input type="number" name="selling_price" step="10" min="0" required 
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                     </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ASSURANCE</label>
+                        <select name="assurance" required 
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            <option value="">Select Type</option>
+                            <option value="None" selected>None</option>
+                            <option value="Guarantee">Guarantee</option>
+                            <option value="Warranty">Warranty</option>
+                            
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">MONTHS</label>
+                        <input type="number" name="validity" step="1" min="0" required 
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                    </div>
+
+
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Initial Quantity</label>

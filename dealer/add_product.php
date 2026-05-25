@@ -13,18 +13,23 @@ if (!$is_admin) {
         $dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
         $company_id = $_POST['company_id'];
         $product_name = $_POST['product_name'];
+        $hsn_code = $_POST['hsn_code'];
+        $barcode_no = $_POST['barcode_no'];
+        $gst = $_POST['gst'];
         $purchase_price = $_POST['purchase_price'];
         $selling_price = $_POST['selling_price'];
-        $initial_quantity = $_POST['initial_quantity']; // current_stock
+        $assurance = $_POST['assurance'];
+        $validity = $_POST['validity'];
+        $initial_quantity = 0; // current_stock
   
-        if(empty($company_id) || empty($product_name) || empty($purchase_price) || empty($selling_price) ){    // isset for quantity because it can be 0
+        if(empty($company_id) || empty($product_name) || empty($hsn_code) || empty($barcode_no) || empty($gst) || empty($purchase_price) || empty($selling_price) || empty($assurance) || empty($validity) ){    // isset for quantity because it can be 0
             print_r($_POST);
             die("All fields are required.");
         }
         // Handle Form Submission
         
         if($_SERVER["REQUEST_METHOD"] == "POST"){
-            $sql = "INSERT INTO `products`(`dealer_id`, `company_id`, `product_name`, `base_price`, `selling_price`, `current_stock`) VALUES ('$dealer_id','$company_id','$product_name','$purchase_price','$selling_price','$initial_quantity')";
+            $sql = "INSERT INTO `products`(`dealer_id`, `company_id`, `product_name`, `HSN`,`GST`,`Barcode`,`base_price`, `selling_price`, `assurance`, `validity`, `current_stock`) VALUES ('$dealer_id','$company_id','$product_name','$hsn_code','$gst','$barcode_no', '$purchase_price','$selling_price','$assurance','$validity','$initial_quantity')";
             if ($conn->query($sql) === TRUE) {
                 $product_id = $conn->insert_id; // Get the ID of the newly inserted product
                 // Insert product price history when procut added for the first time and create new row for same when price updates

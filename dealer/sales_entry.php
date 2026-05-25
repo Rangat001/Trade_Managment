@@ -1,6 +1,10 @@
 <?php
 require_once 'includes/auth_check.php';
 
+//                                    Error in prcess_sale
+
+
+
 // Get Products 
 
 $products = [];
@@ -30,6 +34,7 @@ $stmt->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sales Entry - Dealer Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
@@ -89,6 +94,19 @@ $stmt->close();
 
     <!-- Main Content -->
     <div class="ml-64">
+
+ <?php if (!empty($_SESSION['sale_error'])): ?>
+<div id="saleErrorBox" role="alert" class="mx-8 my-4 p-4 rounded-lg border border-red-300 bg-red-600/10 text-red-800">
+  <div class="flex items-start gap-3">
+    <i class="fas fa-exclamation-triangle text-red-600 mt-0.5"></i>
+    <div class="text-sm">
+      <div class="font-semibold">Error</div>
+      <div><?= htmlspecialchars($_SESSION['sale_error']) ?></div>
+    </div>
+  </div>
+</div>
+<?php unset($_SESSION['sale_error']); endif; ?>
+
         <!-- Top Navigation -->
         <header class="sticky top-0 bg-white border-b border-gray-200 px-8 py-4 shadow-sm z-40">
             <div class="flex items-center justify-between">
@@ -144,8 +162,8 @@ $stmt->close();
                             <select name="billing_type" required
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
                                 <option value="">-- Select Billing Type --</option>
-                                <option value="GST">GST Billing</option>
-                                <option value="NON-GST">Non-GST Billing</option>
+                                <option value="GST" selected>GST Billing</option>
+                                <option value="NON-GST" >Non-GST Billing</option>
                             </select>
                         </div>
                         
@@ -156,7 +174,7 @@ $stmt->close();
                             <select name="payment_mode" required
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
                                 <option value="">-- Select Payment Mode --</option>
-                                <option value="CASH">Cash</option>
+                                <option value="CASH" selected>Cash</option>
                                 <option value="UPI">UPI</option>
                                 <option value="CARD">Card</option>
                             </select>
@@ -169,7 +187,7 @@ $stmt->close();
                             <select name="delivery_status" required
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
                                 <option value="">-- Select Delivery Status --</option>
-                                <option value="ON-HAND">On-Hand (Delivered)</option>
+                                <option value="ON-HAND" selected>On-Hand (Delivered)</option>
                                 <option value="PENDING">Pending Delivery</option>
                                 <option value="DELIVERED">Delivered</option>
                             </select>
@@ -263,16 +281,22 @@ $stmt->close();
 
                 <!-- Action Buttons -->
                 <div class="flex flex-col sm:flex-row gap-4 justify-end">
-                    <a href="sales.html"
+                    <a href="sales.php"
                        class="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all text-base">
                         <i class="fas fa-times"></i>
                         Cancel
                     </a>
                     
-                    <button type="submit"
+                    <button type="submit" name="action" value="save"
                             class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-xl transition-all text-base">
                         <i class="fas fa-check-circle"></i>
                         Save Sale
+                    </button>
+
+                    <button type="button" name="action" value="save_print" onclick="submitAndPrint()"
+                         class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-xl transition-all text-base">
+                        <i class="fas fa-print"></i>
+                            Save &amp; Print
                     </button>
                 </div>
 
@@ -281,7 +305,33 @@ $stmt->close();
         </main>
     </div>
 
+
+    
+
     <script>
+
+    
+
+
+        function submitAndPrint() {
+            const form = document.getElementById('salesForm');
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'action';
+            input.value = 'save_print';
+            form.appendChild(input);
+
+            form.target = '_blank';
+            form.submit();
+            form.target = '_self';
+
+            // Redirect original tab to sales.php after submit
+            setTimeout(() => {
+                window.location.href = 'sales.php';
+            }, 500);
+        }
+
         // Product data (In production, load from backend)
         const productsList = <?= json_encode($products, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 

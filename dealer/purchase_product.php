@@ -276,12 +276,119 @@ $stmt->close();
 
             </form>
 
+            <!-- Purchase Confirmation Modal -->
+            <div id="purchaseConfirmModal" class="hidden fixed inset-0 z-[60]">
+                <div class="absolute inset-0 bg-black/50"></div>
+                <div class="relative flex items-center justify-center min-h-screen p-4">
+                    <div class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary to-secondary text-white">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold flex items-center gap-2">
+                                    <i class="fas fa-clipboard-check"></i>
+                                    Confirm Purchase
+                                </h3>
+                                <button type="button" id="closeConfirmModal" class="text-white/90 hover:text-white">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="p-6 max-h-[75vh] overflow-y-auto">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500">Company</p>
+                                    <p id="modalCompany" class="text-sm font-semibold text-gray-900">-</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500">Purchase Date</p>
+                                    <p id="modalDate" class="text-sm font-semibold text-gray-900">-</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500">Bill / Reference</p>
+                                    <p id="modalBill" class="text-sm font-semibold text-gray-900">-</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500">Status</p>
+                                    <p id="modalStatus" class="text-sm font-semibold text-gray-900">-</p>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-xl overflow-hidden mb-5">
+                                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                                    <h4 class="text-sm font-semibold text-gray-800">Purchase Items</h4>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead class="bg-gray-50 text-gray-600">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left">Product</th>
+                                                <th class="px-4 py-2 text-right">Qty</th>
+                                                <th class="px-4 py-2 text-right">Price</th>
+                                                <th class="px-4 py-2 text-right">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="modalItemsBody" class="divide-y divide-gray-100"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                                    <p class="text-xs text-emerald-700">Grand Total</p>
+                                    <p id="modalGrandTotal" class="text-xl font-bold text-emerald-800">₹0.00</p>
+                                </div>
+                                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                                    <p class="text-xs text-indigo-700">Payment</p>
+                                    <p id="modalPayment" class="text-sm font-semibold text-indigo-900">-</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+                            <button type="button" id="cancelConfirmModal" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100">
+                                Cancel
+                            </button>
+                            <button type="button" id="confirmSubmitPurchase" class="px-5 py-2 rounded-lg bg-gradient-to-r from-primary to-secondary text-white hover:opacity-95">
+                                Confirm & Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Theme Alert Modal -->
+            <div id="themeAlertModal" class="hidden fixed inset-0 z-[65]">
+                <div class="absolute inset-0 bg-black/45"></div>
+                <div class="relative flex items-center justify-center min-h-screen p-4">
+                    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                        <div class="px-5 py-4 bg-red-50 border-b border-red-100 flex items-center gap-2 text-red-700">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <h3 class="font-semibold">Action Required</h3>
+                        </div>
+                        <div class="p-5">
+                            <p id="themeAlertMessage" class="text-gray-700 text-sm"></p>
+                        </div>
+                        <div class="px-5 pb-5 flex justify-end">
+                            <button type="button" id="closeThemeAlert" class="px-4 py-2 rounded-lg bg-gradient-to-r from-primary to-secondary text-white">
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
     <script>
         let rowIndex = 0;
         let products = [];
+        const companySelect = document.getElementById('companySelect');
+        const purchaseForm = document.getElementById('purchaseForm');
+        const purchaseConfirmModal = document.getElementById('purchaseConfirmModal');
+        const themeAlertModal = document.getElementById('themeAlertModal');
+        const modalItemsBody = document.getElementById('modalItemsBody');
+        let allowSubmit = false;
 
         /* Fetch products by company */
         function loadCompanyProducts() {
@@ -352,6 +459,154 @@ $stmt->close();
         function togglePayment(){
             paymentFields.classList.toggle('hidden');
         }
+
+        function buildPurchaseSummary() {
+            const companyName = companySelect.selectedOptions[0]?.textContent?.trim() || 'Not selected';
+            const purchaseDate = purchaseForm.querySelector('input[name="purchase_date"]')?.value || '-';
+            const billNumber = purchaseForm.querySelector('input[name="bill_number"]')?.value?.trim() || '-';
+            const purchaseStatus = purchaseForm.querySelector('select[name="purchase_status"]')?.value || '-';
+
+            const rows = Array.from(document.querySelectorAll('#productsTableBody tr'));
+            const items = [];
+            let grandTotal = 0;
+
+            rows.forEach((tr) => {
+                const productSel = tr.querySelector('select[name*="[product_id]"]');
+                const priceInput = tr.querySelector('.price');
+                const qtyInput = tr.querySelector('.qty');
+
+                if (!productSel || !qtyInput) return;
+
+                const productName = productSel.selectedOptions[0]?.textContent?.trim() || '';
+                const qty = parseFloat(qtyInput.value || 0);
+                const price = parseFloat(priceInput?.value || 0);
+
+                if (!productSel.value || qty <= 0) return;
+
+                const lineTotal = qty * price;
+                grandTotal += lineTotal;
+
+                items.push({
+                    productName,
+                    qty,
+                    price,
+                    lineTotal
+                });
+            });
+
+            const paymentNow = document.getElementById('paymentToggle').checked;
+            const amountPaid = parseFloat(document.getElementById('amountPaid')?.value || 0);
+            const paymentMode = purchaseForm.querySelector('select[name="payment_mode"]')?.value || '-';
+            const paymentDate = purchaseForm.querySelector('input[name="payment_date"]')?.value || '-';
+
+            return {
+                companyName,
+                purchaseDate,
+                billNumber,
+                purchaseStatus,
+                items,
+                grandTotal,
+                paymentNow,
+                amountPaid,
+                paymentMode,
+                paymentDate,
+                hasItems: items.length > 0
+            };
+        }
+
+        function showThemeAlert(message) {
+            document.getElementById('themeAlertMessage').textContent = message;
+            themeAlertModal.classList.remove('hidden');
+        }
+
+        function closeThemeAlert() {
+            themeAlertModal.classList.add('hidden');
+        }
+
+        function openConfirmModal(summaryData) {
+            document.getElementById('modalCompany').textContent = summaryData.companyName;
+            document.getElementById('modalDate').textContent = summaryData.purchaseDate;
+            document.getElementById('modalBill').textContent = summaryData.billNumber;
+            document.getElementById('modalStatus').textContent = summaryData.purchaseStatus;
+            document.getElementById('modalGrandTotal').textContent = `₹${summaryData.grandTotal.toFixed(2)}`;
+
+            if (summaryData.paymentNow) {
+                document.getElementById('modalPayment').textContent = `Paid ₹${summaryData.amountPaid.toFixed(2)} via ${summaryData.paymentMode} on ${summaryData.paymentDate}`;
+            } else {
+                document.getElementById('modalPayment').textContent = 'No payment made now';
+            }
+
+            modalItemsBody.innerHTML = '';
+            summaryData.items.forEach((item) => {
+                const tr = document.createElement('tr');
+
+                const nameTd = document.createElement('td');
+                nameTd.className = 'px-4 py-2 text-gray-800';
+                nameTd.textContent = item.productName;
+
+                const qtyTd = document.createElement('td');
+                qtyTd.className = 'px-4 py-2 text-right text-gray-700';
+                qtyTd.textContent = item.qty;
+
+                const priceTd = document.createElement('td');
+                priceTd.className = 'px-4 py-2 text-right text-gray-700';
+                priceTd.textContent = `₹${item.price.toFixed(2)}`;
+
+                const totalTd = document.createElement('td');
+                totalTd.className = 'px-4 py-2 text-right font-medium text-gray-900';
+                totalTd.textContent = `₹${item.lineTotal.toFixed(2)}`;
+
+                tr.appendChild(nameTd);
+                tr.appendChild(qtyTd);
+                tr.appendChild(priceTd);
+                tr.appendChild(totalTd);
+                modalItemsBody.appendChild(tr);
+            });
+
+            purchaseConfirmModal.classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            purchaseConfirmModal.classList.add('hidden');
+        }
+
+        purchaseForm.addEventListener('submit', function (e) {
+            if (allowSubmit) {
+                allowSubmit = false;
+                return;
+            }
+
+            e.preventDefault();
+            const summaryData = buildPurchaseSummary();
+
+            if (!summaryData.hasItems) {
+                showThemeAlert('Please add at least one product with quantity before submitting.');
+                return;
+            }
+
+            openConfirmModal(summaryData);
+        });
+        document.getElementById('confirmSubmitPurchase').addEventListener('click', function () {
+            allowSubmit = true;
+            closeConfirmModal();
+            purchaseForm.requestSubmit();
+        });
+
+        document.getElementById('cancelConfirmModal').addEventListener('click', closeConfirmModal);
+        document.getElementById('closeConfirmModal').addEventListener('click', closeConfirmModal);
+        document.getElementById('closeThemeAlert').addEventListener('click', closeThemeAlert);
+
+        purchaseConfirmModal.addEventListener('click', function (e) {
+            if (e.target === purchaseConfirmModal) {
+                closeConfirmModal();
+            }
+        });
+
+        themeAlertModal.addEventListener('click', function (e) {
+            if (e.target === themeAlertModal) {
+                closeThemeAlert();
+            }
+        });
     </script>
 
 </body>

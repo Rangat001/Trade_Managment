@@ -88,6 +88,14 @@ require_once 'includes/auth_check.php';
                     <!-- Dropdown Menu -->
                     <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                         
+                        <!-- Add this -->
+                        <a href="#" onclick="openProfileModal()" class="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-user-edit"></i>
+                            <span>Edit Profile</span>
+                        </a>
+                    
+                        <div class="border-t border-gray-100 my-1"></div>
+
                         <a href="logout.php" class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>Logout</span>
@@ -372,9 +380,129 @@ require_once 'includes/auth_check.php';
             </div>
 
         </main>
+
+        
     </div>
 
+    <!-- ░░ PROFILE MODAL ░░ -->
+<div id="profileModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-indigo-500 to-indigo-600">
+            <h2 class="text-white font-semibold text-lg flex items-center gap-2">
+                <i class="fas fa-user-edit"></i> Edit Profile
+            </h2>
+            <button onclick="closeProfileModal()" class="text-white/80 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <form id="profileForm" class="px-6 py-5 space-y-4">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Owner Name</label>
+                <input type="text" name="owner_name" id="f_owner_name"
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm"
+                       placeholder="Enter owner name">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Mobile No</label>
+                <input type="text" name="phone" id="f_phone" maxlength="10"
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm"
+                       placeholder="Enter mobile number">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">GST No</label>
+                <input type="text" name="GST_NO" id="f_gst" maxlength="15"
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm"
+                       placeholder="Enter GST number">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <textarea name="Address" id="f_address" rows="3"
+                          class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm resize-none"
+                          placeholder="Enter address"></textarea>
+            </div>
+
+            <!-- Alert -->
+            <div id="profileAlert" class="hidden text-sm px-4 py-2 rounded-lg"></div>
+
+            <!-- Buttons -->
+            <div class="flex gap-3 pt-1">
+                <button type="button" onclick="closeProfileModal()"
+                        class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all text-sm">
+                    Cancel
+                </button>
+                <button type="button" onclick="saveProfile()"
+                        class="flex-1 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all text-sm">
+                    <i class="fas fa-save mr-1"></i> Save
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
     <script>
+        function openProfileModal() {
+    // Close dropdown first
+    document.getElementById('profileMenu').classList.add('hidden');
+
+    // Fetch current dealer data
+    fetch('ajax/get_dealer_profile.php')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('f_owner_name').value = data.owner_name ?? '';
+            document.getElementById('f_phone').value      = data.phone ?? '';
+            document.getElementById('f_gst').value        = data.GST_NO ?? '';
+            document.getElementById('f_address').value    = data.Address ?? '';
+        });
+
+    const modal = document.getElementById('profileModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeProfileModal() {
+    const modal = document.getElementById('profileModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.getElementById('profileAlert').classList.add('hidden');
+}
+
+function saveProfile() {
+    const form = document.getElementById('profileForm');
+    const data = new FormData(form);
+
+    fetch('ajax/update_dealer_profile.php', {
+        method: 'POST',
+        body: data
+    })
+    .then(r => r.json())
+    .then(res => {
+        const alert = document.getElementById('profileAlert');
+        alert.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+        if (res.success) {
+            alert.classList.add('bg-green-100', 'text-green-700');
+            alert.textContent = '✓ Profile updated successfully!';
+            setTimeout(() => closeProfileModal(), 1500);
+        } else {
+            alert.classList.add('bg-red-100', 'text-red-700');
+            alert.textContent = '✗ ' + (res.message ?? 'Something went wrong');
+        }
+    });
+}
+
+// Close modal on backdrop click
+document.getElementById('profileModal').addEventListener('click', function(e) {
+    if (e.target === this) closeProfileModal();
+});
+
         // Mobile menu toggle
         const sidebar = document.getElementById('sidebar');
         const menuToggle = document.getElementById('menuToggle');
