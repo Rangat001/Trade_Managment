@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
      // Retrieve hashed password from the database based on the provided email
-     $selectQuery = "SELECT * FROM users WHERE email = '$login_user_name'";
+     $selectQuery = "SELECT * FROM users WHERE email = '$login_user_name' and is_active = 1";
      $result = $conn->query($selectQuery);
 
     if ($result->num_rows > 0) {
@@ -48,18 +48,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }else{
               header("Location: ../../index.php");
             }
-              
-      }   
-    }else{
-        // Password is incorrect
-        $_SESSION['rgt_error_message'] = "Incorrect password.";
-        header("Location: ../../auth/sign-in.php");
-        echo "eror";
-      }
+          }   
+      }else{
+          // Password is incorrect
+          $_SESSION['rgt_error_message'] = "Incorrect password. ";
+          header("Location: ../../auth/sign-in.php");
+          echo "eror";
+        }
 
     }else{
       // username not found in the database
-      $_SESSION['rgt_error_message'] = "username is  not found.";
+      $_SESSION['rgt_error_message'] = "username is  not found OR Not Authorized.";
       header("Location: ../../auth/sign-in.php");
   }
   $conn->close();

@@ -2,7 +2,7 @@
 require_once 'includes/auth_check.php';
 
 // Fetch staff members
-$stmt = $conn->prepare("SELECT id, name, email, role, is_verified FROM users WHERE dealer_id = ?");
+$stmt = $conn->prepare("SELECT id, name, email, role, is_verified FROM users WHERE dealer_id = ? and is_active = 1");
 $stmt->bind_param("i", $dealer_id);
 $stmt->execute();
 $staff_result = $stmt->get_result();
@@ -65,10 +65,10 @@ $staff_result = $stmt->get_result();
                 <i class="fas fa-users w-5 mr-3"></i>
                 <span class="font-medium">Staff Management</span>
             </a>
-            <a href="reports.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <!-- <a href="reports.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-chart-line w-5 mr-3"></i>
                 <span class="font-medium">Reports</span>
-            </a>
+            </a> -->
         </nav>
     </aside>
 
@@ -153,9 +153,16 @@ $staff_result = $stmt->get_result();
                                 </td>
                                 <td class="py-4 px-6">
                                     <div class="flex items-center gap-2">
-                                        <button onclick="openEditStaffModal(<?php echo $staff['id']; ?>, '<?php echo htmlspecialchars($staff['name']); ?>', '<?php echo htmlspecialchars($staff['email']); ?>', '<?php echo $staff['role']; ?>')" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
+                                       <button 
+    data-id="<?= $staff['id'] ?>"
+    data-name="<?= htmlspecialchars($staff['name']) ?>"
+    data-email="<?= htmlspecialchars($staff['email']) ?>"
+    data-role="<?= htmlspecialchars($staff['role']) ?>"
+    onclick="openEditStaffModal(this)"
+    class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+    <i class="fas fa-edit"></i> Edit
+</button>
+
                                         <button onclick="disableStaff(<?php echo $staff['id']; ?>)" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
                                             <i class="fas fa-ban"></i> Disable
                                         </button>
@@ -237,25 +244,25 @@ $staff_result = $stmt->get_result();
                 </button>
             </div>
             
-            <form action="edit_staff.php" method="POST" class="p-6">
-                <input type="hidden" name="staff_id" value="1">
+            <form id="editStaffForm"  class="p-6">
+                <input type="hidden" name="staff_id" id="edit_staff_id" value="1">
                 
                 <div class="space-y-5">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Name *</label>
-                        <input type="text" name="staff_name" value="Rajesh Kumar" required 
+                        <input type="text" name="staff_name"  id="edit_staff_name"  required 
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-                        <input type="email" name="staff_email" value="rajesh@shop.com" required 
+                        <input type="email" name="staff_email" id="edit_staff_email" required 
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Role *</label>
-                        <select name="staff_role" required 
+                        <select name="staff_role" id="edit_staff_role" required 
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                             <option value="STAFF">Staff</option>
                             <option value="ADMIN">Admin</option>
@@ -270,7 +277,7 @@ $staff_result = $stmt->get_result();
                             class="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg transition-colors">
                         Cancel
                     </button>
-                    <button type="submit" 
+                    <button type="button" onclick="saveStaff()" 
                             class="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-lg shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all">
                         Update Staff
                     </button>
@@ -280,6 +287,51 @@ $staff_result = $stmt->get_result();
     </div>
 
     <script>
+
+        // Edit staff - submit form via AJAX
+function saveStaff() {
+    const formData = new FormData();
+    formData.append('staff_id',    document.getElementById('edit_staff_id').value);
+    formData.append('staff_name',  document.getElementById('edit_staff_name').value);
+    formData.append('staff_email', document.getElementById('edit_staff_email').value);
+    formData.append('staff_role',  document.getElementById('edit_staff_role').value);
+
+    fetch('ajax/edit_staff.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            closeEditStaffModal();
+            location.reload(); // reload to reflect changes
+        } else {
+            alert('Error: ' + res.message);
+        }
+    });
+}
+
+// Disable staff
+function disableStaff(staff_id) {
+    if (!confirm('Are you sure you want to disable this staff member?')) return;
+
+    const formData = new FormData();
+    formData.append('staff_id', staff_id);
+
+    fetch('ajax/disable_staff.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + res.message);
+        }
+    });
+}
+
         function openAddStaffModal() {
             document.getElementById('addStaffModal').classList.remove('hidden');
         }
@@ -288,13 +340,18 @@ $staff_result = $stmt->get_result();
             document.getElementById('addStaffModal').classList.add('hidden');
         }
         
-        function openEditStaffModal() {
-            document.getElementById('editStaffModal').classList.remove('hidden');
-        }
-        
-        function closeEditStaffModal() {
-            document.getElementById('editStaffModal').classList.add('hidden');
-        }
+       function openEditStaffModal(btn) {
+    document.getElementById('edit_staff_id').value    = btn.dataset.id;
+    document.getElementById('edit_staff_name').value  = btn.dataset.name;
+    document.getElementById('edit_staff_email').value = btn.dataset.email;
+    document.getElementById('edit_staff_role').value  = btn.dataset.role;
+
+    document.getElementById('editStaffModal').classList.remove('hidden');
+}
+
+function closeEditStaffModal() {
+    document.getElementById('editStaffModal').classList.add('hidden');
+}
         
         document.getElementById('addStaffModal').addEventListener('click', function(e) {
             if (e.target === this) closeAddStaffModal();

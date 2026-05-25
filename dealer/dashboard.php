@@ -58,10 +58,10 @@ require_once 'includes/auth_check.php';
                 <i class="fas fa-users w-5 mr-3"></i>
                 <span class="font-medium">Staff Management</span>
             </a>
-            <a href="reports.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+            <!-- <a href="reports.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <i class="fas fa-chart-line w-5 mr-3"></i>
                 <span class="font-medium">Reports</span>
-            </a>
+            </a> -->
         </nav>
     </aside>
 
