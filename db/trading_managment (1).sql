@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 06, 2026 at 05:55 PM
+-- Generation Time: May 25, 2026 at 11:56 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -66,6 +66,8 @@ CREATE TABLE `dealer` (
   `owner_name` varchar(255) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
+  `GST_NO` varchar(15) NOT NULL,
+  `Address` varchar(300) NOT NULL,
   `plan` enum('FREE','BASIC','PRO') DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -81,8 +83,13 @@ CREATE TABLE `products` (
   `dealer_id` bigint(20) DEFAULT NULL,
   `company_id` bigint(20) DEFAULT NULL,
   `product_name` varchar(255) DEFAULT NULL,
+  `HSN` varchar(40) DEFAULT NULL,
+  `GST` int(11) NOT NULL,
+  `Barcode` varchar(40) DEFAULT NULL,
   `base_price` decimal(10,2) DEFAULT NULL,
   `selling_price` decimal(10,2) DEFAULT NULL,
+  `assurance` enum('None','Guarantee','Warranty') NOT NULL,
+  `VALIDITY` int(11) NOT NULL,
   `current_stock` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -148,6 +155,7 @@ CREATE TABLE `sales` (
   `payment_mode` enum('UPI','CASH','CARD') NOT NULL,
   `profit` decimal(12,2) NOT NULL,
   `delivery` enum('ON-HAND','PENDING','DELIVERED') NOT NULL,
+  `mobile_no` bigint(10) DEFAULT NULL,
   `is_deleted` tinyint(4) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -179,7 +187,8 @@ CREATE TABLE `users` (
   `email` varchar(255) DEFAULT NULL,
   `password` varchar(255) DEFAULT NULL,
   `role` enum('ADMIN','STAFF') DEFAULT NULL,
-  `is_verified` tinyint(1) NOT NULL
+  `is_verified` tinyint(1) NOT NULL,
+  `is_active` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
