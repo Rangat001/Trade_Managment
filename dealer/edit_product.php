@@ -13,6 +13,7 @@ if (!$is_admin) {
 
         $dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
         $product_id = $_POST['product_id'];
+        $category = $_POST['category'];
         $product_name = $_POST['product_name'];
         $purchase_price = $_POST['purchase_price'];
         $selling_price = $_POST['selling_price'];
@@ -30,7 +31,8 @@ if (!$is_admin) {
         $update_sql = "UPDATE products 
                       SET product_name = '$product_name', 
                           base_price = '$purchase_price', 
-                          selling_price = '$selling_price' 
+                          selling_price = '$selling_price',
+                          category = '$category'
                       WHERE id = '$product_id' AND dealer_id = '$dealer_id'";
         
         if($conn->query($update_sql) === TRUE){

@@ -126,23 +126,41 @@ function includePermissionJS() {
         }
         
         function disableAllRestrictedButtons() {
-            // Disable by icons
-            document.querySelectorAll('.fa-plus, .fa-edit, .fa-pen, .fa-trash, .fa-ban').forEach(icon => {
-                const btn = icon.closest('button') || icon.closest('a');
-                if (btn && !btn.getAttribute('onclick')?.includes('close')) disableButton(btn);
+            // Map onclick/icon patterns to the permission they require.
+            // Only disable if the user does NOT have that permission.
+            const permissionMap = [
+                // Staff management
+                { selector: '[onclick*="openAddStaffModal"], [onclick*="addStaff"]',   perm: 'staff_add'      },
+                { selector: '[onclick*="openEditStaffModal"], [onclick*="saveStaff"]', perm: 'staff_edit'     },
+                { selector: '[onclick*="disableStaff"]',                               perm: 'staff_delete'   },
+                // Product management
+                { selector: '[onclick*="openAddProductModal"]',                        perm: 'product_add'    },
+                { selector: '[onclick*="openEditProductModal"]',                       perm: 'product_edit'   },
+                // Company management
+                { selector: '[onclick*="openAddCompanyModal"], [onclick*="openAddProductModal"][data-type="company"]', perm: 'company_add'  },
+                { selector: '[onclick*="openEditCompanyModal"], [onclick*="openEditProductModal"][data-type="company"]', perm: 'company_edit' },
+                // Purchase management
+                { selector: '[onclick*="purchase_product.php"]',                       perm: 'purchase_add'   },
+                // Delete actions (non-sale)
+                { selector: '[onclick*="deleteProduct"]',                              perm: 'product_delete' },
+                { selector: '[onclick*="deleteCompany"]',                              perm: 'company_delete' },
+                { selector: '[onclick*="deletePurchase"]',                             perm: 'purchase_delete'},
+            ];
+
+            permissionMap.forEach(({ selector, perm }) => {
+                if (!hasPermission(perm)) {
+                    document.querySelectorAll(selector).forEach(btn => {
+                        if (btn) disableButton(btn);
+                    });
+                }
             });
-            
-            // Disable by onclick patterns
-            document.querySelectorAll('[onclick*="Add"], [onclick*="Edit"], [onclick*="delete"], [onclick*="Delete"], [onclick*="disable"], [onclick*="Disable"]').forEach(btn => {
-                if (!btn.getAttribute('onclick')?.includes('close')) disableButton(btn);
-            });
-            
-            // Disable by data-permission
+
+            // Handle data-permission attributes (explicit, always respected)
             document.querySelectorAll('[data-permission]').forEach(el => {
                 if (!hasPermission(el.getAttribute('data-permission'))) disableButton(el);
             });
-            
-            // Show staff notice
+
+            // Show staff notice once
             const main = document.querySelector('main');
             if (main && !document.getElementById('staff-notice')) {
                 const notice = document.createElement('div');
@@ -155,9 +173,6 @@ function includePermissionJS() {
         
         document.addEventListener('DOMContentLoaded', disableAllRestrictedButtons);
         window.addEventListener('load', disableAllRestrictedButtons);
-        
-        // Observe DOM changes
-        new MutationObserver(() => setTimeout(disableAllRestrictedButtons, 100)).observe(document.body, { childList: true, subtree: true });
         <?php else: ?>
         // Admin has full access - provide helper functions without restrictions
         function hasPermission(p) { return true; }

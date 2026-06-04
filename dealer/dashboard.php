@@ -1,556 +1,349 @@
 <?php
 require_once 'includes/auth_check.php';
+$pageTitle       = 'Dashboard';
+$activePage      = 'dashboard';
+$showEditProfile = true;
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Dealer Panel</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#4F46E5',
-                        secondary: '#6366F1',
-                    }
-                }
-            }
-        }
-    </script>
-    <?php includePermissionJS(); ?>
+<?php require_once 'includes/header.php'; ?>
 </head>
-<body class="bg-gray-50">
-    
-    <!-- Sidebar -->
-    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-screen bg-white border-r border-gray-200 transition-transform duration-300 z-50">
-        <div class="px-6 py-6 border-b border-gray-200">
-            <h2 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                DealerPro
-            </h2>
-        </div>
-        
-        <nav class="p-3 mt-4">
-            <a href="dashboard.php" class="flex items-center px-4 py-3 mb-2 text-white bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg shadow-indigo-500/30">
-                <i class="fas fa-home w-5 mr-3"></i>
-                <span class="font-medium">Dashboard</span>
-            </a>
-            <a href="products.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-box w-5 mr-3"></i>
-                <span class="font-medium">Products</span>
-            </a>
-            <a href="companies.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-box w-5 mr-3"></i>
-                <span class="font-medium">Companies</span>
-            </a>
-            <a href="purchases.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-shopping-cart w-5 mr-3"></i>
-                <span class="font-medium">Purchases</span>
-            </a>
-            <a href="sales.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-cash-register w-5 mr-3"></i>
-                <span class="font-medium">Sales</span>
-            </a>
-            <a href="staff.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-users w-5 mr-3"></i>
-                <span class="font-medium">Staff Management</span>
-            </a>
-            <!-- <a href="reports.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-chart-line w-5 mr-3"></i>
-                <span class="font-medium">Reports</span>
-            </a> -->
-        </nav>
-    </aside>
+<body class="bg-[var(--bg)]">
+<?php require_once 'includes/sidebar.php'; ?>
 
-    <!-- Main Content -->
-    <div class="ml-64">
-        <!-- Top Navigation -->
-        <header class="sticky top-0 bg-white border-b border-gray-200 px-8 py-4 shadow-sm z-40">
-            <div class="flex items-center justify-between">
+<div class="md:ml-64 pb-16 md:pb-0">
+    <main class="p-6 md:p-8">
+
+        <!-- ── Stat Cards ──────────────────────────────────────── -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+            <!-- Total Expense -->
+            <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] p-6 hover:shadow-md transition-shadow">
                 <div class="flex items-center gap-4">
-                    <button id="menuToggle" class="lg:hidden text-gray-600 hover:text-gray-900">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                    <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
-                </div>
-
-                <div class="relative">
-                    <button id="profileDropdown" class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
-                        <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
-                             alt="Profile" class="w-9 h-9 rounded-full">
-                        <span class="font-medium text-gray-700 hidden sm:block">Dealer <?php echo($_SESSION['rgt_logedin_user_role']); ?></span>
-                        <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
-                    </button>
-
-                    <!-- Dropdown Menu -->
-                    <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                        
-                        <!-- Add this -->
-                        <a href="#" onclick="openProfileModal()" class="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
-                            <i class="fas fa-user-edit"></i>
-                            <span>Edit Profile</span>
-                        </a>
-                    
-                        <div class="border-t border-gray-100 my-1"></div>
-
-                        <a href="logout.php" class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </a>
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <img src="../asset/img/icons/expense.png" alt="Total Expense" class="w-12 h-12 object-contain">
                     </div>
-                </div>
-
-            </div>
-        </header>
-
-        <!-- Page Content -->
-        <main class="p-8">
-            
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <!-- Total Expense -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-white-500 to-gray-600 flex items-center justify-center">
-                            <img src="../asset/img/icons/expense.png" alt="Total Expense" class="w-12 h-12 object-contain">
-                        </div>
-                        <div>
-                            <?php
-                            $sale_stmt = $conn->prepare("SELECT SUM(amount) AS expense FROM company_transactions WHERE dealer_id = ? AND type = 'DEBIT'");
-                            $sale_stmt->bind_param("i", $dealer_id);
-                            $sale_stmt->execute();
-                            $sale_result = $sale_stmt->get_result();
-                            $sale_data = $sale_result->fetch_assoc();
-                            ?>
-                            <h3 class="text-3xl font-bold text-gray-900">₹ <?php echo number_format($sale_data['expense']); ?></h3>
-                            <p class="text-sm font-medium text-gray-500">Total Expense</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Total Revenue -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-white-500 to-gray-600 flex items-center justify-center">
-                            <img src="../asset/img/icons/revenue.png" alt="Total Revenue" class="w-12 h-12 object-contain">
-                        </div>
-                        <div>
-                            <?php
-                            $sale_stmt = $conn->prepare("SELECT SUM(total_amount) AS revenue FROM sales WHERE dealer_id = ? ");
-                            $sale_stmt->bind_param("i", $dealer_id);
-                            $sale_stmt->execute();
-                            $sale_result = $sale_stmt->get_result();
-                            $sale_data = $sale_result->fetch_assoc();
-                            ?>
-
-                            <h3 class="text-3xl font-bold text-gray-900">₹ <?php echo number_format($sale_data['revenue']); ?></h3>
-                            <p class="text-sm font-medium text-gray-500">Total Revenue</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Total Sales -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-white-500 to-gray-600 flex items-center justify-center">
-                            <img src="../asset/img/icons/sales.png" alt="Total Sales" class="w-12 h-12 object-contain">
-                        </div>
-                        <div>
-                             <?php
-                                $sale_stmt = $conn->prepare(
-                                    "SELECT COUNT(*) AS total_sales
-                                     FROM sales s
-                                     INNER JOIN sale_items si ON si.sale_id = s.id
-                                     WHERE s.dealer_id = ?"
-                                );                                
-                                $sale_stmt->bind_param("i", $dealer_id);
-                                $sale_stmt->execute();
-                                $sale_result = $sale_stmt->get_result();
-                                $sale_data = $sale_result->fetch_assoc();
-                            ?>
-                            <h3 class="text-3xl font-bold text-gray-900"><?php echo $sale_data['total_sales']; ?></h3>
-                            <p class="text-sm font-medium text-gray-500">Total Sales</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Total Profit -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-white-500 to-gray-600 flex items-center justify-center">
-                            <img src="../asset/img/icons/profit.png" alt="Total Profit" class="w-13 h-13 object-contain">
-                        </div>
-                        <div>
-                            <?php
-                            $sale_stmt = $conn->prepare("SELECT SUM(profit) AS total_profit FROM sales WHERE dealer_id = ? ");
-                            $sale_stmt->bind_param("i", $dealer_id);
-                            $sale_stmt->execute();
-                            $sale_result = $sale_stmt->get_result();
-                            $sale_data = $sale_result->fetch_assoc();
-                            ?>
-                            <h3 class="text-3xl font-bold text-gray-900">₹ <?php echo number_format($sale_data['total_profit']); ?> </h3>
-                            <p class="text-sm font-medium text-gray-500">Total Profit</p>
-                        </div>
+                    <div>
+                        <?php
+                        $sale_stmt = $conn->prepare("SELECT SUM(amount) AS expense FROM company_transactions WHERE dealer_id = ? AND type = 'DEBIT'");
+                        $sale_stmt->bind_param("i", $dealer_id); $sale_stmt->execute();
+                        $sale_data = $sale_stmt->get_result()->fetch_assoc();
+                        ?>
+                        <h3 class="text-2xl font-bold text-[var(--text)]">₹ <?php echo number_format($sale_data['expense'] ?? 0); ?></h3>
+                        <p class="text-sm font-medium text-[var(--subtext)] mt-0.5">Total Expense</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts Row -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                
-                <!-- Top Selling Products -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-5 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-900">Top 5 Least(Qty) Products</h3>
+            <!-- Total Revenue -->
+            <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <img src="../asset/img/icons/revenue.png" alt="Total Revenue" class="w-12 h-12 object-contain">
                     </div>
-                    <div class="p-6">
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="border-b border-gray-200">
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Name</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Company</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qty</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    <?php 
-                                        $sale_stmt = $conn->prepare("SELECT p.product_name, p.current_stock, p.base_price , c.company_name FROM products p JOIN companies c ON p.company_id = c.id WHERE p.dealer_id = ? ORDER BY current_stock ASC LIMIT 5 ");
-                                        $sale_stmt->bind_param("i", $dealer_id);
-                                        $sale_stmt->execute();
-                                        $sale_result = $sale_stmt->get_result();
-                                        while($row = $sale_result->fetch_assoc()) {
-                                            echo '<tr class="hover:bg-gray-50 transition-colors">
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['product_name'].'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['company_name'].'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['current_stock'].'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">₹ '.number_format($row['base_price']).'</td>
-                                            </tr>';
-                                        }
-                                    ?>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div>
+                        <?php
+                        $sale_stmt = $conn->prepare("SELECT SUM(total_amount) AS revenue FROM sales WHERE dealer_id = ?");
+                        $sale_stmt->bind_param("i", $dealer_id); $sale_stmt->execute();
+                        $sale_data = $sale_stmt->get_result()->fetch_assoc();
+                        ?>
+                        <h3 class="text-2xl font-bold text-[var(--text)]">₹ <?php echo number_format($sale_data['revenue'] ?? 0); ?></h3>
+                        <p class="text-sm font-medium text-[var(--subtext)] mt-0.5">Total Revenue</p>
                     </div>
                 </div>
-                
-
-                <!-- Recent Purchases -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-5 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-900">5 Recent Purchases</h3>
-                    </div>
-                    <div class="p-6">
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="border-b border-gray-200">
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Company</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qty</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    <?php 
-                                        $purchase_stmt = $conn->prepare("SELECT c.company_name, p.product_name, pu.quantity, pu.total_price, po.order_date FROM purchase_orders po JOIN purchase_order_items pu ON po.id = pu.order_id JOIN products p ON pu.product_id = p.id JOIN companies c ON p.company_id = c.id WHERE po.dealer_id = ? ORDER BY po.order_date DESC LIMIT 5");
-                                        $purchase_stmt->bind_param("i", $dealer_id);
-                                        $purchase_stmt->execute();
-                                        $purchase_result = $purchase_stmt->get_result();
-                                        while($row = $purchase_result->fetch_assoc()) {
-                                            echo '<tr class="hover:bg-gray-50 transition-colors">
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['company_name'].'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['product_name'].'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['quantity'].'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">₹ '.number_format($row['total_price']).'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.date('d M Y', strtotime($row['order_date'])).'</td>
-                                            </tr>';
-                                        }
-                                    ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Best Selling Products -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-5 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-900">Top 5 Best Seller</h3>
-                    </div>
-                    <div class="p-6">
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="border-b border-gray-200">
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Company</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qty</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    <?php 
-                                        $purchase_stmt = $conn->prepare("SELECT
-                                                            p.id AS product_id,
-                                                            p.product_name,
-                                                            c.company_name,
-                                                            SUM(si.quantity) AS total_qty_sold,
-                                                            SUM(si.quantity * si.selling_price) AS total_revenue
-                                                        FROM sale_items si
-                                                        JOIN sales s     ON si.sale_id = s.id
-                                                        JOIN products p  ON si.product_id = p.id
-                                                        JOIN companies c ON p.company_id = c.id
-                                                        WHERE s.dealer_id = ?
-                                                        GROUP BY p.id, p.product_name, c.company_name
-                                                        ORDER BY total_qty_sold DESC
-                                                        LIMIT 5;");
-                                        $purchase_stmt->bind_param("i", $dealer_id);
-                                        $purchase_stmt->execute();
-                                        $purchase_result = $purchase_stmt->get_result();
-                                        while($row = $purchase_result->fetch_assoc()) {
-                                            echo '<tr class="hover:bg-gray-50 transition-colors">
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['company_name'].'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['product_name'].'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['total_qty_sold'].'</td>
-                                            </tr>';
-                                        }
-                                    ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Selling -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-5 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-900">Recent Selling</h3>
-                    </div>
-                    <div class="p-6">
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="border-b border-gray-200">
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Bill No.</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qty</th>
-
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    <?php 
-                                        $purchase_stmt = $conn->prepare("SELECT
-                                                        s.id  AS sale_id,
-                                                        p.product_name,
-                                                        si.quantity,
-                                                        (si.quantity * si.selling_price) AS amount,
-                                                        s.sale_date
-                                                    FROM sales s
-                                                    JOIN sale_items si ON si.sale_id = s.id
-                                                    JOIN products p    ON si.product_id = p.id
-                                                    WHERE s.dealer_id = ?
-                                                    ORDER BY s.sale_date DESC
-                                                    LIMIT 5;");
-                                        $purchase_stmt->bind_param("i", $dealer_id);
-                                        $purchase_stmt->execute();
-                                        $purchase_result = $purchase_stmt->get_result();
-                                        while($row = $purchase_result->fetch_assoc()) {
-                                            echo '<tr class="hover:bg-gray-50 transition-colors">
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.'BL'.str_pad($row['sale_id'], 6, '0', STR_PAD_LEFT).'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['sale_date'].'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['product_name'].'</td>
-                                                <td class="py-4 px-4 text-sm text-gray-900">'.$row['quantity'].'</td>
-                                            </tr>';
-                                        }
-                                    ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-
-
             </div>
 
-        </main>
+            <!-- Total Sales -->
+            <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <img src="../asset/img/icons/sales.png" alt="Total Sales" class="w-12 h-12 object-contain">
+                    </div>
+                    <div>
+                        <?php
+                        $sale_stmt = $conn->prepare("SELECT COUNT(*) AS total_sales FROM sales s INNER JOIN sale_items si ON si.sale_id = s.id WHERE s.dealer_id = ?");
+                        $sale_stmt->bind_param("i", $dealer_id); $sale_stmt->execute();
+                        $sale_data = $sale_stmt->get_result()->fetch_assoc();
+                        ?>
+                        <h3 class="text-2xl font-bold text-[var(--text)]"><?php echo $sale_data['total_sales'] ?? 0; ?></h3>
+                        <p class="text-sm font-medium text-[var(--subtext)] mt-0.5">Total Sales</p>
+                    </div>
+                </div>
+            </div>
 
-        
-    </div>
+            <!-- Total Profit -->
+            <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <img src="../asset/img/icons/profit.png" alt="Total Profit" class="w-12 h-12 object-contain">
+                    </div>
+                    <div>
+                        <?php
+                        $sale_stmt = $conn->prepare("SELECT SUM(profit) AS total_profit FROM sales WHERE dealer_id = ?");
+                        $sale_stmt->bind_param("i", $dealer_id); $sale_stmt->execute();
+                        $sale_data = $sale_stmt->get_result()->fetch_assoc();
+                        ?>
+                        <h3 class="text-2xl font-bold text-[var(--text)]">₹ <?php echo number_format($sale_data['total_profit'] ?? 0); ?></h3>
+                        <p class="text-sm font-medium text-[var(--subtext)] mt-0.5">Total Profit</p>
+                    </div>
+                </div>
+            </div>
 
-    <!-- ░░ PROFILE MODAL ░░ -->
-<div id="profileModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-        
-        <!-- Modal Header -->
-        <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-indigo-500 to-indigo-600">
-            <h2 class="text-white font-semibold text-lg flex items-center gap-2">
-                <i class="fas fa-user-edit"></i> Edit Profile
-            </h2>
-            <button onclick="closeProfileModal()" class="text-white/80 hover:text-white transition-colors">
-                <i class="fas fa-times text-xl"></i>
+        </div>
+
+        <!-- ── Dashboard Tables ────────────────────────────────── -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+            <!-- Table 1: Top 5 Least Stock -->
+            <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden">
+                <div class="px-6 py-5 border-b border-[var(--border)] flex items-center justify-between">
+                    <h3 class="text-base font-semibold text-[var(--text)]">Top 5 Least(Qty) Products</h3>
+                    <span class="text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">Low Stock</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-[var(--border)]">
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Product</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Company</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Qty</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <?php
+                            $sale_stmt = $conn->prepare("SELECT p.product_name, p.current_stock, p.base_price, c.company_name FROM products p JOIN companies c ON p.company_id = c.id WHERE p.dealer_id = ? ORDER BY current_stock ASC LIMIT 5");
+                            $sale_stmt->bind_param("i", $dealer_id); $sale_stmt->execute();
+                            $sale_result = $sale_stmt->get_result();
+                            if ($sale_result->num_rows === 0): ?>
+                            <tr><td colspan="4" class="py-8 text-center text-sm text-[var(--subtext)]">No products found</td></tr>
+                            <?php else: while ($row = $sale_result->fetch_assoc()): ?>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="py-3 px-4 text-sm font-medium text-[var(--text)]"><?= htmlspecialchars($row['product_name']) ?></td>
+                                <td class="py-3 px-4 text-sm text-[var(--subtext)]"><?= htmlspecialchars($row['company_name']) ?></td>
+                                <td class="py-3 px-4">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold <?= $row['current_stock'] <= 5 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700' ?>">
+                                        <?= $row['current_stock'] ?>
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-sm text-[var(--text)]">₹ <?= number_format($row['base_price']) ?></td>
+                            </tr>
+                            <?php endwhile; endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Table 2: 5 Recent Purchases -->
+            <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden">
+                <div class="px-6 py-5 border-b border-[var(--border)] flex items-center justify-between">
+                    <h3 class="text-base font-semibold text-[var(--text)]">5 Recent Purchases</h3>
+                    <span class="text-xs font-medium text-[var(--subtext)] bg-gray-100 px-2.5 py-1 rounded-full">Latest</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-[var(--border)]">
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Company</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Product</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Qty</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Amount</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <?php
+                            $purchase_stmt = $conn->prepare("SELECT c.company_name, p.product_name, pu.quantity, pu.total_price, po.order_date FROM purchase_orders po JOIN purchase_order_items pu ON po.id = pu.order_id JOIN products p ON pu.product_id = p.id JOIN companies c ON p.company_id = c.id WHERE po.dealer_id = ? ORDER BY po.order_date DESC LIMIT 5");
+                            $purchase_stmt->bind_param("i", $dealer_id); $purchase_stmt->execute();
+                            $purchase_result = $purchase_stmt->get_result();
+                            if ($purchase_result->num_rows === 0): ?>
+                            <tr><td colspan="5" class="py-8 text-center text-sm text-[var(--subtext)]">No purchases found</td></tr>
+                            <?php else: while ($row = $purchase_result->fetch_assoc()): ?>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="py-3 px-4 text-sm font-medium text-[var(--text)]"><?= htmlspecialchars($row['company_name']) ?></td>
+                                <td class="py-3 px-4 text-sm text-[var(--subtext)]"><?= htmlspecialchars($row['product_name']) ?></td>
+                                <td class="py-3 px-4 text-sm text-[var(--text)]"><?= $row['quantity'] ?></td>
+                                <td class="py-3 px-4 text-sm text-[var(--text)]">₹ <?= number_format($row['total_price']) ?></td>
+                                <td class="py-3 px-4 text-sm text-[var(--subtext)] whitespace-nowrap"><?= date('d M Y', strtotime($row['order_date'])) ?></td>
+                            </tr>
+                            <?php endwhile; endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Table 3: Top 5 Best Seller -->
+            <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden">
+                <div class="px-6 py-5 border-b border-[var(--border)] flex items-center justify-between">
+                    <h3 class="text-base font-semibold text-[var(--text)]">Top 5 Best Seller</h3>
+                    <span class="text-xs font-medium text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">Top Selling</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-[var(--border)]">
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">#</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Company</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Product</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Qty Sold</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <?php
+                            $purchase_stmt = $conn->prepare("SELECT p.product_name, c.company_name, SUM(si.quantity) AS total_qty_sold FROM sale_items si JOIN sales s ON si.sale_id = s.id JOIN products p ON si.product_id = p.id JOIN companies c ON p.company_id = c.id WHERE s.dealer_id = ? GROUP BY p.id, p.product_name, c.company_name ORDER BY total_qty_sold DESC LIMIT 5");
+                            $purchase_stmt->bind_param("i", $dealer_id); $purchase_stmt->execute();
+                            $purchase_result = $purchase_stmt->get_result();
+                            if ($purchase_result->num_rows === 0): ?>
+                            <tr><td colspan="4" class="py-8 text-center text-sm text-[var(--subtext)]">No sales data found</td></tr>
+                            <?php
+                            else:
+                                $rank = 1;
+                                while ($row = $purchase_result->fetch_assoc()):
+                                    $rankColors = ['bg-yellow-100 text-yellow-700','bg-gray-100 text-gray-600','bg-orange-100 text-orange-700'];
+                                    $rankColor  = $rankColors[$rank-1] ?? 'bg-gray-50 text-gray-500';
+                            ?>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="py-3 px-4">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold <?= $rankColor ?>">
+                                        <?= $rank ?>
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-sm font-medium text-[var(--text)]"><?= htmlspecialchars($row['company_name']) ?></td>
+                                <td class="py-3 px-4 text-sm text-[var(--subtext)]"><?= htmlspecialchars($row['product_name']) ?></td>
+                                <td class="py-3 px-4 text-sm font-semibold text-[var(--primary)]"><?= number_format($row['total_qty_sold']) ?></td>
+                            </tr>
+                            <?php $rank++; endwhile; endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Table 4: Recent Selling -->
+            <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden">
+                <div class="px-6 py-5 border-b border-[var(--border)] flex items-center justify-between">
+                    <h3 class="text-base font-semibold text-[var(--text)]">Recent Selling</h3>
+                    <span class="text-xs font-medium text-green-600 bg-green-50 px-2.5 py-1 rounded-full">Latest</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-[var(--border)]">
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Bill No.</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Date</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Product</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <?php
+                            $purchase_stmt = $conn->prepare("SELECT s.id AS sale_id, p.product_name, si.quantity, s.sale_date FROM sales s JOIN sale_items si ON si.sale_id = s.id JOIN products p ON si.product_id = p.id WHERE s.dealer_id = ? ORDER BY s.sale_date DESC LIMIT 5");
+                            $purchase_stmt->bind_param("i", $dealer_id); $purchase_stmt->execute();
+                            $purchase_result = $purchase_stmt->get_result();
+                            if ($purchase_result->num_rows === 0): ?>
+                            <tr><td colspan="4" class="py-8 text-center text-sm text-[var(--subtext)]">No recent sales found</td></tr>
+                            <?php else: while ($row = $purchase_result->fetch_assoc()): ?>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="py-3 px-4">
+                                    <span class="text-xs font-mono font-semibold text-[var(--primary)]">
+                                        BL<?= str_pad($row['sale_id'], 6, '0', STR_PAD_LEFT) ?>
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-sm text-[var(--subtext)] whitespace-nowrap"><?= date('d M Y', strtotime($row['sale_date'])) ?></td>
+                                <td class="py-3 px-4 text-sm text-[var(--text)]"><?= htmlspecialchars($row['product_name']) ?></td>
+                                <td class="py-3 px-4 text-sm font-medium text-[var(--text)]"><?= $row['quantity'] ?></td>
+                            </tr>
+                            <?php endwhile; endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+
+<!-- Profile Modal -->
+<div id="profileModal" class="hidden fixed inset-0 z-[9999] items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto overflow-hidden">
+        <div class="bg-gradient-to-r from-[#4F46E5] to-indigo-500 px-6 py-5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-user-edit text-white text-sm"></i>
+                </div>
+                <h2 class="text-lg font-semibold text-white">Edit Profile</h2>
+            </div>
+            <button onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors">
+                <i class="fas fa-times text-white text-sm"></i>
             </button>
         </div>
-
-        <!-- Modal Body -->
-        <form id="profileForm" class="px-6 py-5 space-y-4">
-            
+        <form id="profileForm" class="px-6 py-6 space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Owner Name</label>
-                <input type="text" name="owner_name" id="f_owner_name"
-                       class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm"
-                       placeholder="Enter owner name">
+                <label for="f_owner_name" class="block text-sm font-medium text-[var(--text)] mb-1.5">Owner Name</label>
+                <input type="text" id="f_owner_name" name="owner_name" placeholder="Enter owner name"
+                       class="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all">
             </div>
-
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Mobile No</label>
-                <input type="text" name="phone" id="f_phone" maxlength="10"
-                       class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm"
-                       placeholder="Enter mobile number">
+                <label for="f_phone" class="block text-sm font-medium text-[var(--text)] mb-1.5">Phone Number</label>
+                <input type="tel" id="f_phone" name="phone" maxlength="10" placeholder="10-digit mobile number"
+                       class="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all">
             </div>
-
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">GST No</label>
-                <input type="text" name="GST_NO" id="f_gst" maxlength="15"
-                       class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm"
-                       placeholder="Enter GST number">
+                <label for="f_gst" class="block text-sm font-medium text-[var(--text)] mb-1.5">GST Number</label>
+                <input type="text" id="f_gst" name="GST_NO" maxlength="15" placeholder="15-character GST number"
+                       class="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all uppercase">
             </div>
-
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                <textarea name="Address" id="f_address" rows="3"
-                          class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm resize-none"
-                          placeholder="Enter address"></textarea>
+                <label for="f_address" class="block text-sm font-medium text-[var(--text)] mb-1.5">Address</label>
+                <textarea id="f_address" name="Address" rows="3" placeholder="Enter business address"
+                          class="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all resize-none"></textarea>
             </div>
-
-            <!-- Alert -->
-            <div id="profileAlert" class="hidden text-sm px-4 py-2 rounded-lg"></div>
-
-            <!-- Buttons -->
-            <div class="flex gap-3 pt-1">
-                <button type="button" onclick="closeProfileModal()"
-                        class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all text-sm">
-                    Cancel
-                </button>
-                <button type="button" onclick="saveProfile()"
-                        class="flex-1 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all text-sm">
-                    <i class="fas fa-save mr-1"></i> Save
-                </button>
-            </div>
-
         </form>
+        <div class="px-6 pb-6 flex gap-3">
+            <button onclick="closeProfileModal()" class="flex-1 py-2.5 px-4 bg-gray-100 text-[var(--text)] font-medium rounded-xl hover:bg-gray-200 transition-colors text-sm">Cancel</button>
+            <button onclick="saveProfile()" class="flex-1 py-2.5 px-4 bg-gradient-to-r from-[#4F46E5] to-indigo-500 text-white font-medium rounded-xl transition-all text-sm shadow-sm">Save Changes</button>
+        </div>
     </div>
 </div>
 
-    <script>
-        function openProfileModal() {
-    // Close dropdown first
+<?php require_once 'includes/footer.php'; ?>
+
+<script>
+function openProfileModal() {
     document.getElementById('profileMenu').classList.add('hidden');
-
-    // Fetch current dealer data
     fetch('ajax/get_dealer_profile.php')
-        .then(r => r.json())
-        .then(data => {
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
             document.getElementById('f_owner_name').value = data.owner_name ?? '';
-            document.getElementById('f_phone').value      = data.phone ?? '';
-            document.getElementById('f_gst').value        = data.GST_NO ?? '';
-            document.getElementById('f_address').value    = data.Address ?? '';
-        });
-
-    const modal = document.getElementById('profileModal');
+            document.getElementById('f_phone').value      = data.phone     ?? '';
+            document.getElementById('f_gst').value        = data.GST_NO    ?? '';
+            document.getElementById('f_address').value    = data.Address   ?? '';
+        })
+        .catch(function() { showToast('Failed to load profile', 'error'); });
+    var modal = document.getElementById('profileModal');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 }
-
 function closeProfileModal() {
-    const modal = document.getElementById('profileModal');
+    var modal = document.getElementById('profileModal');
     modal.classList.add('hidden');
     modal.classList.remove('flex');
-    document.getElementById('profileAlert').classList.add('hidden');
 }
-
 function saveProfile() {
-    const form = document.getElementById('profileForm');
-    const data = new FormData(form);
-
-    fetch('ajax/update_dealer_profile.php', {
-        method: 'POST',
-        body: data
-    })
-    .then(r => r.json())
-    .then(res => {
-        const alert = document.getElementById('profileAlert');
-        alert.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
-        if (res.success) {
-            alert.classList.add('bg-green-100', 'text-green-700');
-            alert.textContent = '✓ Profile updated successfully!';
-            setTimeout(() => closeProfileModal(), 1500);
-        } else {
-            alert.classList.add('bg-red-100', 'text-red-700');
-            alert.textContent = '✗ ' + (res.message ?? 'Something went wrong');
-        }
-    });
+    var data = new FormData(document.getElementById('profileForm'));
+    fetch('ajax/update_dealer_profile.php', { method: 'POST', body: data })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success) { showToast('Profile updated!', 'success'); setTimeout(closeProfileModal, 1500); }
+            else { showToast(res.message || 'Update failed', 'error'); }
+        })
+        .catch(function() { showToast('Network error', 'error'); });
 }
-
-// Close modal on backdrop click
 document.getElementById('profileModal').addEventListener('click', function(e) {
     if (e.target === this) closeProfileModal();
 });
-
-        // Mobile menu toggle
-        const sidebar = document.getElementById('sidebar');
-        const menuToggle = document.getElementById('menuToggle');
-        
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-        });
-
-        // Close sidebar on mobile when clicking outside
-        document.addEventListener('click', (e) => {
-            if (window.innerWidth < 1024) {
-                if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
-                    sidebar.classList.add('-translate-x-full');
-                }
-            }
-        });
-
-        // Responsive sidebar
-        function handleResize() {
-            if (window.innerWidth < 1024) {
-                sidebar.classList.add('-translate-x-full');
-            } else {
-                sidebar.classList.remove('-translate-x-full');
-            }
-        }
-        
-        window.addEventListener('resize', handleResize);
-        handleResize();
-
-
-        // Profile dropdown toggle
-
-        const profileDropdown = document.getElementById('profileDropdown');
-        const profileMenu = document.getElementById('profileMenu');
-
-        profileDropdown.addEventListener('click', (e) => {
-            e.stopPropagation();
-            profileMenu.classList.toggle('hidden');
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
-                profileMenu.classList.add('hidden');
-            }
-        });
-
-    </script>
-
+</script>
 </body>
 </html>

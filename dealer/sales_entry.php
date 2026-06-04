@@ -1,549 +1,792 @@
 <?php
 require_once 'includes/auth_check.php';
+$pageTitle  = 'New Sale';
+$activePage = 'sales';
 
-//                                    Error in prcess_sale
-
-
-
-// Get Products 
-
+// Fetch products with category, grouped
 $products = [];
 $stmt = $conn->prepare("
-    SELECT 
-        id,
-        product_name,
-        selling_price
+    SELECT id, product_name, selling_price, current_stock, category
     FROM products
     WHERE dealer_id = ?
-    ORDER BY product_name
+    ORDER BY CASE WHEN (category IS NULL OR category = '') THEN 1 ELSE 0 END, category, product_name
 ");
 $stmt->bind_param("i", $dealer_id);
 $stmt->execute();
 $res = $stmt->get_result();
-
 while ($row = $res->fetch_assoc()) {
     $products[] = $row;
 }
 $stmt->close();
 
+// Group by category (empty/null → '__none__')
+$grouped = [];
+foreach ($products as $p) {
+    $cat = (isset($p['category']) && trim($p['category']) !== '') ? trim($p['category']) : '__none__';
+    $grouped[$cat][] = $p;
+}
+$categories = array_keys($grouped);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Entry - Dealer Panel</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#4F46E5',
-                        secondary: '#6366F1',
-                    }
-                }
-            }
-        }
-    </script>
-    <?php includePermissionJS(); ?>
+<?php require_once 'includes/header.php'; ?>
+<style>
+/* ── POS Touch Layout ─────────────────────────────────────── */
+.pos-wrap {
+    display: flex;
+    height: calc(100vh - 57px); /* subtract topbar */
+    overflow: hidden;
+}
+/* Left: product grid */
+.pos-left {
+    flex: 1 1 0%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+}
+/* Right: bill panel */
+.pos-right {
+    width: 340px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-left: 1px solid var(--border);
+}
+@media (max-width: 767px) {
+    .pos-wrap { flex-direction: column; height: auto; }
+    .pos-right { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+}
+
+/* Product card */
+.prod-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 10px 12px;
+    cursor: pointer;
+    transition: border-color .15s, box-shadow .15s, transform .1s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
+}
+.prod-card:hover  { border-color: var(--primary); box-shadow: 0 4px 16px rgba(79,70,229,.12); }
+.prod-card:active { transform: scale(.96); }
+.prod-card.out-of-stock { opacity: .5; cursor: not-allowed; }
+.prod-card .prod-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: var(--primary-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    color: var(--primary);
+}
+.prod-card .prod-name {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+    max-height: 2.6em;
+    overflow: hidden;
+}
+.prod-card .prod-price {
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+.prod-card .prod-stock {
+    font-size: .68rem;
+    color: var(--subtext);
+}
+/* Cart item row */
+.cart-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    animation: slideIn .15s ease;
+}
+@keyframes slideIn {
+    from { opacity:0; transform: translateX(10px); }
+    to   { opacity:1; transform: translateX(0); }
+}
+.cart-row .cart-name {
+    flex: 1;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+}
+.cart-row .cart-price {
+    font-size: .75rem;
+    color: var(--subtext);
+}
+.qty-btn {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--text);
+    transition: all .12s;
+    flex-shrink: 0;
+}
+.qty-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.qty-display {
+    min-width: 28px;
+    text-align: center;
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--text);
+}
+.cart-total {
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--text);
+    min-width: 52px;
+    text-align: right;
+}
+/* Search bar */
+.pos-search {
+    width: 100%;
+    padding: .55rem 1rem .55rem 2.5rem;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: .875rem;
+    color: var(--text);
+    background: #fff;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.pos-search:focus { border-color: var(--primary); box-shadow: 0 0 0 3px #EEF2FF; }
+/* Pay chip */
+.pay-chip {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .3rem .75rem;
+    border-radius: 9999px;
+    border: 1.5px solid var(--border);
+    font-size: .75rem; font-weight: 600;
+    cursor: pointer; transition: all .12s;
+    background: #fff; color: var(--subtext);
+    user-select: none;
+}
+.pay-chip.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+
+/* Category view */
+.cat-view-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 12px 16px;
+    cursor: pointer;
+    transition: border-color .15s, box-shadow .15s, transform .1s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.cat-view-card:hover  { border-color: var(--primary); box-shadow: 0 6px 20px rgba(79,70,229,.14); }
+.cat-view-card:active { transform: scale(.95); }
+.cat-view-card .cat-icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+}
+.cat-view-card .cat-label {
+    font-size: .82rem; font-weight: 700;
+    color: var(--text); line-height: 1.3;
+}
+.cat-view-card .cat-count-pill {
+    font-size: .68rem; font-weight: 600;
+    color: var(--subtext);
+    background: #F3F4F6;
+    padding: 2px 8px; border-radius: 999px;
+}
+</style>
 </head>
-<body class="bg-gray-50">
-    
-    <!-- Sidebar -->
-    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-screen bg-white border-r border-gray-200 transition-transform duration-300 z-50">
-        <div class="px-6 py-6 border-b border-gray-200">
-            <h2 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                DealerPro
-            </h2>
-        </div>
-        
-        <nav class="p-3 mt-4">
-           <a href="dashboard.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-home w-5 mr-3"></i>
-                <span class="font-medium">Dashboard</span>
-            </a>
-            <a href="products.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-box w-5 mr-3"></i>
-                <span class="font-medium">Products</span>
-            </a>
-            <a href="companies.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-box w-5 mr-3"></i>
-                <span class="font-medium">Companies</span>
-            </a>
-            <a href="purchases.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-shopping-cart w-5 mr-3"></i>
-                <span class="font-medium">Purchases</span>
-            </a>
-            <a href="sales.php" class="flex items-center px-4 py-3 mb-2 text-white bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg shadow-indigo-500/30">
-                <i class="fas fa-cash-register w-5 mr-3"></i>
-                <span class="font-medium">Sales</span>
-            </a>
-            <a href="staff.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-users w-5 mr-3"></i>
-                <span class="font-medium">Staff Management</span>
-            </a>
-            <a href="reports.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-chart-line w-5 mr-3"></i>
-                <span class="font-medium">Reports</span>
-            </a>
-        </nav>
-    </aside>
+<body class="bg-[var(--bg)]">
+<?php require_once 'includes/sidebar.php'; ?>
 
-    <!-- Main Content -->
-    <div class="ml-64">
+<!-- ═══ POS WRAPPER (full-height, no scroll on outer) ═══════ -->
+<div class="md:ml-64">
 
- <?php if (!empty($_SESSION['sale_error'])): ?>
-<div id="saleErrorBox" role="alert" class="mx-8 my-4 p-4 rounded-lg border border-red-300 bg-red-600/10 text-red-800">
-  <div class="flex items-start gap-3">
-    <i class="fas fa-exclamation-triangle text-red-600 mt-0.5"></i>
-    <div class="text-sm">
-      <div class="font-semibold">Error</div>
-      <div><?= htmlspecialchars($_SESSION['sale_error']) ?></div>
-    </div>
-  </div>
+<?php if (!empty($_SESSION['sale_error'])): ?>
+<div class="mx-4 mt-3 p-3 rounded-xl border border-red-300 bg-red-50 text-red-800 flex items-start gap-3 text-sm">
+    <i class="fas fa-exclamation-triangle text-red-500 mt-0.5 flex-shrink-0"></i>
+    <div><strong>Error:</strong> <?= htmlspecialchars($_SESSION['sale_error']) ?></div>
+    <button onclick="this.parentElement.remove()" class="ml-auto text-red-400 hover:text-red-600">&times;</button>
 </div>
 <?php unset($_SESSION['sale_error']); endif; ?>
 
-        <!-- Top Navigation -->
-        <header class="sticky top-0 bg-white border-b border-gray-200 px-8 py-4 shadow-sm z-40">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <button id="menuToggle" class="lg:hidden text-gray-600 hover:text-gray-900">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                    <h1 class="text-2xl font-semibold text-gray-900">Sales Entry</h1>
-                </div>
-                <div class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
-                    <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
-                         alt="Profile" class="w-9 h-9 rounded-full">
-                    <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
-                    <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+<div class="pos-wrap">
+
+    <!-- ══════════════════════════════════════════════════════
+         LEFT — Product Catalogue
+         ══════════════════════════════════════════════════════ -->
+    <div class="pos-left">
+
+        <!-- Top bar -->
+        <div class="flex items-center gap-3 px-4 py-3 bg-white border-b border-[var(--border)] flex-shrink-0">
+            <!-- Left: back-to-sales OR back-to-categories -->
+            <button id="topBarBack" onclick="goBackToCategories()"
+                    class="w-9 h-9 flex items-center justify-center rounded-xl border border-[var(--border)] text-[var(--subtext)] hover:bg-gray-50 transition-colors flex-shrink-0 hidden">
+                <i class="fas fa-arrow-left text-sm"></i>
+            </button>
+            <a id="topBarBackSales" href="sales.php"
+               class="w-9 h-9 flex items-center justify-center rounded-xl border border-[var(--border)] text-[var(--subtext)] hover:bg-gray-50 transition-colors flex-shrink-0">
+                <i class="fas fa-arrow-left text-sm"></i>
+            </a>
+
+            <!-- Title / breadcrumb -->
+            <div class="flex-1 min-w-0">
+                <div id="viewTitle" class="text-sm font-semibold text-[var(--text)] truncate">
+                    All Categories
                 </div>
             </div>
-        </header>
 
-        <!-- Page Content -->
-        <main class="p-8 max-w-7xl">
-            
-            <!-- Page Header -->
-            <div class="mb-6">
-                <h2 class="text-2xl font-semibold text-gray-900">Create New Sale</h2>
-                <p class="text-gray-500 mt-1">Record a product sale and manage delivery</p>
+            <!-- Search (only in product view) -->
+            <div id="searchWrap" class="relative hidden" style="width:180px">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-[var(--subtext)] text-xs pointer-events-none"></i>
+                <input type="text" id="productSearch" placeholder="Search…" class="pos-search" oninput="filterProducts(this.value)">
             </div>
 
-            <!-- Sales Form -->
-            <form action="process_sale.php" method="POST" id="salesForm">
+            <span id="topBarCount" class="text-xs text-[var(--subtext)] whitespace-nowrap hidden sm:block">
+                <?= count($categories) ?> categories
+            </span>
+        </div>
 
-                <input type="hidden" name="final_amount" id="finalAmountInput" value="0">
+        <!-- Scrollable content area -->
+        <div class="flex-1 overflow-y-auto p-4" id="scrollArea">
 
-                <!-- Section 1: Sale Details -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <i class="fas fa-info-circle text-primary"></i>
-                        Sale Details
-                    </h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Sale Date *
-                            </label>
-                            <input type="date" name="sale_date" id="saleDate" required
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Billing Type *
-                            </label>
-                            <select name="billing_type" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
-                                <option value="">-- Select Billing Type --</option>
-                                <option value="GST" selected>GST Billing</option>
-                                <option value="NON-GST" >Non-GST Billing</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Payment Mode *
-                            </label>
-                            <select name="payment_mode" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
-                                <option value="">-- Select Payment Mode --</option>
-                                <option value="CASH" selected>Cash</option>
-                                <option value="UPI">UPI</option>
-                                <option value="CARD">Card</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Delivery Status *
-                            </label>
-                            <select name="delivery_status" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
-                                <option value="">-- Select Delivery Status --</option>
-                                <option value="ON-HAND" selected>On-Hand (Delivered)</option>
-                                <option value="PENDING">Pending Delivery</option>
-                                <option value="DELIVERED">Delivered</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Mobile No
-                            </label>
-                            <input type="number" name="mobile" id="mobile" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base">
-                        </div>
-                    </div>
+            <!-- ══ CATEGORY VIEW (default) ══════════════════════ -->
+            <div id="categoryView">
+                <?php if (empty($products)): ?>
+                <div class="py-16 text-center text-[var(--subtext)]">
+                    <i class="fas fa-box-open text-4xl mb-3 text-gray-300"></i>
+                    <p class="font-medium">No products found</p>
+                    <p class="text-xs mt-1">Add products first from the Products page</p>
                 </div>
-
-                <!-- Section 2: Products Table -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                            <i class="fas fa-shopping-basket text-primary"></i>
-                            Products
-                        </h3>
-                        <button type="button" onclick="addProductRow()" 
-                                class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-lg shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all text-sm">
-                            <i class="fas fa-plus"></i>
-                            Add Product
-                        </button>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full" id="productsTable">
-                            <thead>
-                                <tr class="bg-gray-50 border-b border-gray-200">
-                                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-2/5">Product</th>
-                                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/6">Quantity</th>
-                                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/5">Selling Price (₹)</th>
-                                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/5">Line Total (₹)</th>
-                                    <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="productsTableBody">
-                                <!-- Product rows will be added here dynamically -->
-                                <tr>
-                                    <td colspan="5" class="py-12 text-center text-gray-500">
-                                        <i class="fas fa-shopping-basket text-5xl mb-3 text-gray-300"></i>
-                                        <p class="text-base">Click "Add Product" to start adding items to this sale</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Section 3: Summary Panel -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                    <div class="lg:col-span-2"></div>
-                    
-                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <i class="fas fa-calculator text-blue-600"></i>
-                            Sale Summary
-                        </h3>
-                        
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center py-2 border-b border-blue-200">
-                                <span class="text-sm text-gray-600">Total Items</span>
-                                <span class="text-lg font-bold text-gray-900" id="totalItems">0</span>
-                            </div>
-                            <div class="flex justify-between items-center py-2 border-b border-blue-200">
-                                <span class="text-sm text-gray-600">Total Quantity</span>
-                                <span class="text-lg font-bold text-gray-900" id="totalQuantity">0</span>
-                            </div>
-                            <div class="flex justify-between items-center py-3">
-                                <span class="text-base font-medium text-gray-700">Total Sale Amount</span>
-                                <span class="text-2xl font-bold text-blue-600" id="totalSaleAmount">₹0.00</span>
-                            </div>
-
-                            <div class="flex justify-between items-center py-2 border-b border-blue-200">
-                                <span class="text-sm text-gray-600">Discount (₹)</span>
-                                <input type="number" step="0.01" min="0"
-                                       id="discountAmount"
-                                       name="discount_amount"
-                                       value="0"
-                                       oninput="calculateSummary()"
-                                       class="w-32 px-2 py-1 text-right border border-gray-300 rounded-md text-sm">
-                            </div>
-
+                <?php else: ?>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+                    <?php
+                    $catPalette = [
+                        ['bg-indigo-100 text-indigo-600','fa fa-tag'],
+                        ['bg-emerald-100 text-emerald-600','fa fa-tag'],
+                        ['bg-amber-100 text-amber-600','fa fa-tag'],
+                        ['bg-rose-100 text-rose-600','fa fa-tag'],
+                        ['bg-sky-100 text-sky-600','fa fa-tag'],
+                        ['bg-purple-100 text-purple-600','fa fa-tag'],
+                        ['bg-orange-100 text-orange-600','fa fa-tag'],
+                        ['bg-teal-100 text-teal-600','fa fa-tag'],
+                    ];
+                    $ci = 0;
+                    foreach ($grouped as $cat => $catProducts):
+                        $catLabel  = ($cat === '__none__') ? 'No Category' : $cat;
+                        $palette   = $catPalette[$ci % count($catPalette)];
+                        $iconClass = 'fas fa-tag';
+                        $colorCls  = $palette[0];
+                        $ci++;
+                    ?>
+                    <div class="cat-view-card"
+                         onclick="openCategory('<?= htmlspecialchars($catLabel, ENT_QUOTES) ?>', <?= count($catProducts) ?>)">
+                        <div class="cat-icon <?= $colorCls ?>">
+                            <i class="<?= $iconClass ?>" ></i>
                         </div>
+                        <div class="cat-label"><?= htmlspecialchars($catLabel) ?></div>
+                        <div class="cat-count-pill"><?= count($catProducts) ?> items</div>
                     </div>
+                    <?php $ci++; endforeach; ?>
                 </div>
+                <?php endif; ?>
+            </div>
 
-                <!-- Action Buttons -->
-                <div class="flex flex-col sm:flex-row gap-4 justify-end">
-                    <a href="sales.php"
-                       class="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all text-base">
-                        <i class="fas fa-times"></i>
-                        Cancel
-                    </a>
-                    
-                    <button type="submit" name="action" value="save"
-                            class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-xl transition-all text-base">
-                        <i class="fas fa-check-circle"></i>
-                        Save Sale
-                    </button>
-
-                    <button type="button" name="action" value="save_print" onclick="submitAndPrint()"
-                         class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-xl transition-all text-base">
-                        <i class="fas fa-print"></i>
-                            Save &amp; Print
-                    </button>
+            <!-- ══ PRODUCT VIEW (shown after category tap) ══════ -->
+            <div id="productView" class="hidden">
+                <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+                    <!-- Populated by JS -->
                 </div>
+                <div id="noResults" class="hidden py-16 text-center text-[var(--subtext)]">
+                    <i class="fas fa-search text-3xl mb-3 text-gray-300"></i>
+                    <p class="font-medium text-sm">No products match your search</p>
+                </div>
+            </div>
 
-            </form>
+        </div>
 
-        </main>
     </div>
+    <!-- /LEFT -->
 
+    <!-- ══════════════════════════════════════════════════════
+         RIGHT — Bill / Cart Panel
+         ══════════════════════════════════════════════════════ -->
+    <div class="pos-right">
 
-    
+        <!-- Bill header -->
+        <div class="px-4 py-3 border-b border-[var(--border)] flex-shrink-0">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-receipt text-[var(--primary)]"></i>
+                    <span class="font-bold text-[var(--text)] text-sm">Current Bill</span>
+                    <span id="cartBadge" class="hidden text-[10px] font-bold bg-[var(--primary)] text-white px-1.5 py-0.5 rounded-full">0</span>
+                </div>
+                <button type="button" onclick="clearCart()"
+                        class="text-xs text-red-400 hover:text-red-600 transition-colors flex items-center gap-1">
+                    <i class="fas fa-trash-alt text-xs"></i> Clear
+                </button>
+            </div>
 
-    <script>
-
-    
-
-
-        function submitAndPrint() {
-            const form = document.getElementById('salesForm');
-
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'action';
-            input.value = 'save_print';
-            form.appendChild(input);
-
-            form.target = '_blank';
-            form.submit();
-            form.target = '_self';
-
-            // Redirect original tab to sales.php after submit
-            setTimeout(() => {
-                window.location.href = 'sales.php';
-            }, 500);
-        }
-
-        // Product data (In production, load from backend)
-        const productsList = <?= json_encode($products, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
-
-        // Initialize
-        let productRowCounter = 0;
-
-        // Set today's date
-        document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('saleDate').value = today;
-        });
-
-        // Add product row
-        function addProductRow() {
-            const tbody = document.getElementById('productsTableBody');
-            const emptyRow = tbody.querySelector('tr td[colspan="5"]');
-            if (emptyRow) {
-                emptyRow.parentElement.remove();
-            }
-            
-            productRowCounter++;
-            const rowId = `row_${productRowCounter}`;
-            
-            const row = document.createElement('tr');
-            row.id = rowId;
-            row.className = 'border-b border-gray-200 hover:bg-gray-50 transition-colors';
-            row.innerHTML = `
-                <td class="py-3 px-4">
-                    <select name="products[${productRowCounter}][product_id]" 
-                            class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm product-select"
-                            onchange="updateSellingPrice('${rowId}')" required>
-                        <option value="">-- Select Product --</option>
-                       ${productsList.map(p => `
-                            <option value="${p.id}" data-price="${p.selling_price}">
-                                ${p.product_name}
-                            </option>
-                        `).join('')}
+            <!-- Sale meta: date + billing type in one row -->
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <div>
+                    <label class="block text-[10px] font-semibold text-[var(--subtext)] uppercase mb-1">Date</label>
+                    <input type="date" id="saleDateDisplay" class="w-full text-xs border border-[var(--border)] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[var(--primary)]">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-[var(--subtext)] uppercase mb-1">Billing</label>
+                    <select id="billingTypeDisplay" class="w-full text-xs border border-[var(--border)] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[var(--primary)]">
+                        <option value="GST">GST</option>
+                        <option value="NON-GST">NON-GST</option>
                     </select>
-                </td>
-                <td class="py-3 px-4">
-                    <input type="number" name="products[${productRowCounter}][quantity]" 
-                           min="1" placeholder="0"
-                           class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm quantity-input"
-                           oninput="calculateLineTotal('${rowId}')" required>
-                </td>
-                <td class="py-3 px-4">
-                    <div class="flex items-center gap-1">
-                        <span class="text-gray-500 text-sm">₹</span>
-                        <input type="number" name="products[${productRowCounter}][selling_price]" 
-                               step="0.01" min="0" placeholder="0.00"
-                               class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm price-input"
-                               oninput="calculateLineTotal('${rowId}')" required>
-                    </div>
-                </td>
-                <td class="py-3 px-4">
-                    <div class="flex items-center gap-1">
-                        <span class="text-gray-500 text-sm">₹</span>
-                        <input type="text" class="line-total w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-900" 
-                               readonly value="0.00">
-                    </div>
-                </td>
-                <td class="py-3 px-4 text-center">
-                    <button type="button" onclick="removeProductRow('${rowId}')"
-                            class="w-9 h-9 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            
-            tbody.appendChild(row);
-            calculateSummary();
+                </div>
+            </div>
+
+            <!-- Payment mode chips -->
+            <div class="flex gap-1.5 flex-wrap mb-2">
+                <button type="button" class="pay-chip active" data-mode="CASH" onclick="selectPayMode('CASH')">
+                    <i class="fas fa-money-bill-wave"></i> CASH
+                </button>
+                <button type="button" class="pay-chip" data-mode="UPI" onclick="selectPayMode('UPI')">
+                    <i class="fas fa-mobile-alt"></i> UPI
+                </button>
+                <button type="button" class="pay-chip" data-mode="CARD" onclick="selectPayMode('CARD')">
+                    <i class="fas fa-credit-card"></i> CARD
+                </button>
+            </div>
+
+            <!-- Mobile (optional) -->
+            <div class="relative">
+                <i class="fas fa-phone absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--subtext)] text-[10px] pointer-events-none"></i>
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="mobileDisplay" placeholder="Customer mobile (optional)"
+                       class="w-full text-xs border border-[var(--border)] rounded-lg pl-7 pr-3 py-1.5 focus:outline-none focus:border-[var(--primary)]">
+            </div>
+        </div>
+
+        <!-- Cart items (scrollable) -->
+        <div class="flex-1 overflow-y-auto" id="cartList">
+            <!-- Empty cart state — always stays in DOM, toggled via style.display -->
+            <div id="cartEmpty" style="display:flex" class="flex-col items-center justify-center h-full py-10 text-[var(--subtext)]">
+                <i class="fas fa-shopping-cart text-3xl mb-3 text-gray-200"></i>
+                <p class="text-sm font-medium text-gray-400">Cart is empty</p>
+                <p class="text-xs mt-1 text-gray-300">Tap a product to add it</p>
+            </div>
+        </div>
+
+        <!-- Bill totals + actions -->
+        <div class="flex-shrink-0 border-t border-[var(--border)] bg-white">
+
+            <!-- Totals -->
+            <div class="px-4 py-3 space-y-1.5">
+                <div class="flex justify-between text-xs text-[var(--subtext)]">
+                    <span>Items</span>
+                    <span id="summItems" class="font-semibold text-[var(--text)]">0</span>
+                </div>
+                <div class="flex justify-between text-xs text-[var(--subtext)]">
+                    <span>Total Qty</span>
+                    <span id="summQty" class="font-semibold text-[var(--text)]">0</span>
+                </div>
+                <div class="flex justify-between text-xs text-[var(--subtext)]">
+                    <span>Subtotal</span>
+                    <span id="summSubtotal" class="font-semibold text-[var(--text)]">₹0.00</span>
+                </div>
+                <div class="flex justify-between items-center text-xs text-[var(--subtext)]">
+                    <span>Discount (₹)</span>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*"  id="discountInput" min="0" step="0.01" value="0"
+                           oninput="recalcTotals()"
+                           class="w-24 text-right text-xs border border-[var(--border)] rounded-lg px-2 py-1 focus:outline-none focus:border-[var(--primary)] font-semibold">
+                </div>
+                <div class="flex justify-between items-center pt-1 border-t border-dashed border-[var(--border)]">
+                    <span class="text-sm font-bold text-[var(--text)] uppercase tracking-wide">Total</span>
+                    <span id="summTotal" class="text-xl font-extrabold text-[var(--primary)]">₹0.00</span>
+                </div>
+            </div>
+
+            <!-- Delivery status -->
+            <div class="px-4 pb-2">
+                <select id="deliveryStatusDisplay" class="w-full text-xs border border-[var(--border)] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[var(--primary)]">
+                    <option value="ON-HAND">On-Hand (Delivered)</option>
+                    <option value="PENDING">Pending Delivery</option>
+                    <option value="DELIVERED">Delivered</option>
+                </select>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="px-4 pb-4 space-y-2">
+                <button type="button" onclick="submitSale('save')"
+                        class="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl shadow shadow-green-300 transition-all text-sm">
+                    <i class="fas fa-check-circle"></i> Save Sale
+                </button>
+                <button type="button" onclick="submitSale('save_print')"
+                        class="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow shadow-blue-300 transition-all text-sm">
+                    <i class="fas fa-print"></i> Save &amp; Print
+                </button>
+            </div>
+        </div>
+
+    </div>
+    <!-- /RIGHT -->
+
+</div><!-- /pos-wrap -->
+</div><!-- /md:ml-64 -->
+
+<!-- Hidden form — submitted programmatically -->
+<form action="process_sale.php" method="POST" id="salesForm" style="display:none">
+    <input type="hidden" name="sale_date"        id="f_sale_date">
+    <input type="hidden" name="billing_type"     id="f_billing_type">
+    <input type="hidden" name="payment_mode"     id="f_payment_mode">
+    <input type="hidden" name="delivery_status"  id="f_delivery_status">
+    <input type="hidden" name="mobile"           id="f_mobile">
+    <input type="hidden" name="discount_amount"  id="f_discount">
+    <input type="hidden" name="final_amount"     id="f_final_amount">
+    <!-- product rows injected by JS -->
+    <div id="formProductRows"></div>
+</form>
+
+<?php require_once 'includes/footer.php'; ?>
+
+<script>
+/* ================================================================
+   TOUCH POS — Sales Entry
+   Category-first navigation + Save&Print stays on page
+   ================================================================ */
+
+// All products from PHP — keyed by category
+var allGrouped = <?php
+    $js_grouped = [];
+    foreach ($grouped as $cat => $catProducts) {
+        $catLabel = ($cat === '__none__') ? 'No Category' : $cat;
+        foreach ($catProducts as $p) {
+            $js_grouped[$catLabel][] = [
+                'id'    => $p['id'],
+                'name'  => $p['product_name'],
+                'price' => (float)$p['selling_price'],
+                'stock' => (int)$p['current_stock'],
+            ];
         }
+    }
+    echo json_encode($js_grouped, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+?>;
 
-        // Update selling price when product selected
-        function updateSellingPrice(rowId) {
-            const row = document.getElementById(rowId);
-            const productSelect = row.querySelector('.product-select');
-            const priceInput = row.querySelector('.price-input');
+// cart: { productId: { id, name, price, qty } }
+var cart = {};
+var currentCategory = null; // which category is open in product view
 
-            const selectedOption = productSelect.options[productSelect.selectedIndex];
-            const price = selectedOption.getAttribute('data-price');
+/* ── Color palette for product icons ──────────────────────── */
+var iconColors = [
+    'bg-indigo-100 text-indigo-600','bg-emerald-100 text-emerald-600',
+    'bg-amber-100 text-amber-600','bg-rose-100 text-rose-600',
+    'bg-sky-100 text-sky-600','bg-purple-100 text-purple-600',
+    'bg-orange-100 text-orange-600','bg-teal-100 text-teal-600'
+];
+function iconColor(str) { return iconColors[str.charCodeAt(0) % iconColors.length]; }
 
-            if (price !== null) {
-                priceInput.value = parseFloat(price).toFixed(2);
-                calculateLineTotal(rowId);
-            }
-        }
+/* ── Init ──────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('saleDateDisplay').value = new Date().toISOString().split('T')[0];
+});
 
-        // Calculate line total for a row
-        function calculateLineTotal(rowId) {
-            const row = document.getElementById(rowId);
-            const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
-            const price = parseFloat(row.querySelector('.price-input').value) || 0;
-            const lineTotal = quantity * price;
-            
-            row.querySelector('.line-total').value = lineTotal.toFixed(2);
-            calculateSummary();
-        }
+/* ── Open a category → show its products ──────────────────── */
+function openCategory(catLabel, count) {
+    currentCategory = catLabel;
 
-        // Remove product row
-        function removeProductRow(rowId) {
-            const row = document.getElementById(rowId);
-            row.remove();
-            
-            const tbody = document.getElementById('productsTableBody');
-            if (tbody.children.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="py-12 text-center text-gray-500">
-                            <i class="fas fa-shopping-basket text-5xl mb-3 text-gray-300"></i>
-                            <p class="text-base">Click "Add Product" to start adding items to this sale</p>
-                        </td>
-                    </tr>
-                `;
-            }
-            
-            calculateSummary();
-        }
+    // Switch views
+    document.getElementById('categoryView').classList.add('hidden');
+    document.getElementById('productView').classList.remove('hidden');
 
-        // Calculate summary totals
-function calculateSummary() {
-    const tbody = document.getElementById('productsTableBody');
-    const rows = tbody.querySelectorAll('tr[id^="row_"]');
+    // Update top bar
+    document.getElementById('topBarBackSales').classList.add('hidden');
+    document.getElementById('topBarBack').classList.remove('hidden');
+    document.getElementById('searchWrap').classList.remove('hidden');
+    document.getElementById('viewTitle').textContent = catLabel;
+    document.getElementById('topBarCount').textContent = count + ' products';
+    document.getElementById('productSearch').value = '';
 
-    let totalItems = 0;
-    let totalQuantity = 0;
-    let totalAmount = 0;
-
-    rows.forEach(row => {
-        const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
-        const lineTotal = parseFloat(row.querySelector('.line-total').value) || 0;
-
-        if (quantity > 0) {
-            totalItems++;
-            totalQuantity += quantity;
-            totalAmount += lineTotal;
-        }
-    });
-
-    const discount = parseFloat(document.getElementById('discountAmount')?.value) || 0;
-    const finalAmount = Math.max(totalAmount - discount, 0);
-
-    document.getElementById('totalItems').textContent = totalItems;
-    document.getElementById('totalQuantity').textContent = totalQuantity;
-    document.getElementById('totalSaleAmount').textContent = `₹${finalAmount.toFixed(2)}`;
-
-    // Hidden field for backend
-    document.getElementById('finalAmountInput').value = finalAmount.toFixed(2);
+    // Render products for this category
+    renderProductGrid(allGrouped[catLabel] || []);
 }
 
+/* ── Go back to category selection ────────────────────────── */
+function goBackToCategories() {
+    currentCategory = null;
 
-        // Form validation before submit
-        document.getElementById('salesForm').addEventListener('submit', function(e) {
-            const tbody = document.getElementById('productsTableBody');
-            const hasProducts = tbody.querySelector('.line-total') !== null;
-            
-            if (!hasProducts) {
-                e.preventDefault();
-                alert('Please add at least one product to the sale');
-                return false;
-            }
-            
-            // Validate that all products have quantity and price
-            const rows = tbody.querySelectorAll('tr[id^="row_"]');
-            let hasInvalidRow = false;
-            
-            rows.forEach(row => {
-                const productSelect = row.querySelector('.product-select');
-                const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
-                const price = parseFloat(row.querySelector('.price-input').value) || 0;
-                
-                if (!productSelect.value || quantity <= 0 || price <= 0) {
-                    hasInvalidRow = true;
-                }
-            });
-            
-            if (hasInvalidRow) {
-                e.preventDefault();
-                alert('Please fill in all product details with valid values');
-                return false;
-            }
-            
-            return true;
-        });
+    document.getElementById('productView').classList.add('hidden');
+    document.getElementById('categoryView').classList.remove('hidden');
 
-        // Mobile menu toggle
-        const sidebar = document.getElementById('sidebar');
-        const menuToggle = document.getElementById('menuToggle');
-        
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-        });
+    document.getElementById('topBarBack').classList.add('hidden');
+    document.getElementById('topBarBackSales').classList.remove('hidden');
+    document.getElementById('searchWrap').classList.add('hidden');
+    document.getElementById('viewTitle').textContent = 'All Categories';
+    document.getElementById('topBarCount').textContent = Object.keys(allGrouped).length + ' categories';
 
-        document.addEventListener('click', (e) => {
-            if (window.innerWidth < 1024) {
-                if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
-                    sidebar.classList.add('-translate-x-full');
-                }
-            }
-        });
+    // Clear search
+    document.getElementById('productSearch').value = '';
+    document.getElementById('noResults').classList.add('hidden');
 
-        function handleResize() {
-            if (window.innerWidth < 1024) {
-                sidebar.classList.add('-translate-x-full');
-            } else {
-                sidebar.classList.remove('-translate-x-full');
-            }
-        }
-        
-        window.addEventListener('resize', handleResize);
-        handleResize();
-    </script>
+    // Scroll back to top
+    document.getElementById('scrollArea').scrollTop = 0;
+}
 
+/* ── Render product cards into #productGrid ────────────────── */
+function renderProductGrid(prods) {
+    var grid = document.getElementById('productGrid');
+    grid.innerHTML = '';
+    document.getElementById('noResults').classList.add('hidden');
+
+    if (!prods || prods.length === 0) {
+        grid.innerHTML = '<div class="col-span-full py-16 text-center text-gray-400"><i class="fas fa-box-open text-4xl mb-3 block opacity-40"></i><p class="text-sm">No products in this category</p></div>';
+        return;
+    }
+
+    prods.forEach(function (p) {
+        var outOfStock = p.stock <= 0;
+        var initial    = p.name.charAt(0).toUpperCase();
+        var color      = iconColor(initial);
+        var inCartQty  = cart[p.id] ? cart[p.id].qty : 0;
+
+        var div = document.createElement('div');
+        div.className  = 'prod-card' + (outOfStock ? ' out-of-stock' : '');
+        div.dataset.id    = p.id;
+        div.dataset.name  = p.name;
+        div.dataset.price = p.price;
+        div.dataset.stock = p.stock;
+        if (!outOfStock) div.onclick = function () { addToCart(div); };
+        div.title = p.name;
+
+        div.innerHTML =
+            '<div class="prod-icon ' + color + '">' + _esc(initial) + '</div>'
+          + '<div class="prod-name">' + _esc(p.name) + '</div>'
+          + '<div class="prod-price">₹' + p.price.toFixed(2) + '</div>'
+          + '<div class="prod-stock">' + (outOfStock ? '<span class="text-red-500">Out of stock</span>' : 'Stock: ' + p.stock) + '</div>'
+          + (outOfStock ? '' : '<div id="badge-' + p.id + '" style="' + (inCartQty > 0 ? 'display:flex' : 'display:none') + '" class="absolute top-2 right-2 w-5 h-5 rounded-full bg-[var(--primary)] text-white text-[10px] font-bold flex items-center justify-center">' + (inCartQty > 0 ? inCartQty : '') + '</div>');
+
+        grid.appendChild(div);
+    });
+}
+
+/* ── Search within current product view ────────────────────── */
+function filterProducts(q) {
+    q = q.toLowerCase().trim();
+    if (!currentCategory) return; // not in product view
+
+    var prods = allGrouped[currentCategory] || [];
+    var filtered = q ? prods.filter(function (p) { return p.name.toLowerCase().includes(q); }) : prods;
+
+    renderProductGrid(filtered);
+    document.getElementById('noResults').classList.toggle('hidden', filtered.length > 0);
+}
+
+/* ── Payment mode chips ────────────────────────────────────── */
+function selectPayMode(mode) {
+    document.querySelectorAll('.pay-chip').forEach(function (c) {
+        c.classList.toggle('active', c.dataset.mode === mode);
+    });
+}
+
+/* ── Add product to cart ───────────────────────────────────── */
+function addToCart(cardEl) {
+    var id    = cardEl.dataset.id;
+    var name  = cardEl.dataset.name;
+    var price = parseFloat(cardEl.dataset.price);
+
+    if (cart[id]) { cart[id].qty++; }
+    else { cart[id] = { id: id, name: name, price: price, qty: 1 }; }
+
+    renderCart();
+    cardEl.style.transform = 'scale(0.94)';
+    setTimeout(function () { cardEl.style.transform = ''; }, 120);
+}
+
+/* ── Badge on product card ─────────────────────────────────── */
+function updateBadge(id) {
+    var badge = document.getElementById('badge-' + id);
+    if (!badge) return;
+    var qty = cart[id] ? cart[id].qty : 0;
+    badge.textContent   = qty > 0 ? qty : '';
+    badge.style.display = qty > 0 ? 'flex' : 'none';
+}
+
+/* ── Render cart ───────────────────────────────────────────── */
+function renderCart() {
+    var ids   = Object.keys(cart);
+    var list  = document.getElementById('cartList');
+    var empty = document.getElementById('cartEmpty');
+
+    empty.style.display = ids.length === 0 ? 'flex' : 'none';
+    list.querySelectorAll('.cart-row').forEach(function (r) { r.remove(); });
+
+    ids.forEach(function (id) {
+        var item = cart[id];
+        var row  = document.createElement('div');
+        row.className = 'cart-row';
+        row.id = 'cart-row-' + id;
+        row.innerHTML =
+            '<div class="flex-1 min-w-0">'
+          +   '<div class="cart-name truncate">' + _esc(item.name) + '</div>'
+          +   '<div class="cart-price">₹' + item.price.toFixed(2) + ' each</div>'
+          + '</div>'
+          + '<button type="button" class="qty-btn" onclick="changeQty(\'' + id + '\',-1)">−</button>'
+          + '<span class="qty-display">' + item.qty + '</span>'
+          + '<button type="button" class="qty-btn" onclick="changeQty(\'' + id + '\',1)">+</button>'
+          + '<div class="cart-total">₹' + (item.price * item.qty).toFixed(2) + '</div>'
+          + '<button type="button" onclick="removeFromCart(\'' + id + '\')"'
+          +   ' class="w-7 h-7 flex items-center justify-center rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 transition-colors ml-1">'
+          +   '<i class="fas fa-times text-xs"></i></button>';
+        list.appendChild(row);
+        updateBadge(id);
+    });
+
+    recalcTotals();
+}
+
+/* ── Change qty ────────────────────────────────────────────── */
+function changeQty(id, delta) {
+    if (!cart[id]) return;
+    cart[id].qty += delta;
+    if (cart[id].qty <= 0) { removeFromCart(id); return; }
+    var row = document.getElementById('cart-row-' + id);
+    if (row) {
+        row.querySelector('.qty-display').textContent = cart[id].qty;
+        row.querySelector('.cart-total').textContent  = '₹' + (cart[id].price * cart[id].qty).toFixed(2);
+    }
+    updateBadge(id);
+    recalcTotals();
+}
+
+/* ── Remove from cart ──────────────────────────────────────── */
+function removeFromCart(id) {
+    delete cart[id];
+    updateBadge(id);
+    renderCart();
+}
+
+/* ── Clear cart ────────────────────────────────────────────── */
+function clearCart() {
+    Object.keys(cart).forEach(function (id) { cart[id].qty = 0; updateBadge(id); });
+    cart = {};
+    renderCart();
+}
+
+/* ── Recalc totals ─────────────────────────────────────────── */
+function recalcTotals() {
+    var ids = Object.keys(cart);
+    var totalItems = ids.length, totalQty = 0, subtotal = 0;
+    ids.forEach(function (id) { totalQty += cart[id].qty; subtotal += cart[id].price * cart[id].qty; });
+    var discount   = parseFloat(document.getElementById('discountInput').value) || 0;
+    var grandTotal = Math.max(subtotal - discount, 0);
+    document.getElementById('summItems').textContent    = totalItems;
+    document.getElementById('summQty').textContent      = totalQty;
+    document.getElementById('summSubtotal').textContent = '₹' + subtotal.toFixed(2);
+    document.getElementById('summTotal').textContent    = '₹' + grandTotal.toFixed(2);
+    var hb = document.getElementById('cartBadge');
+    if (totalItems > 0) { hb.textContent = totalItems; hb.classList.remove('hidden'); }
+    else { hb.classList.add('hidden'); }
+}
+
+/* ── Build hidden form fields ──────────────────────────────── */
+function buildForm() {
+    var ids = Object.keys(cart);
+    var saleDate = document.getElementById('saleDateDisplay').value;
+    if (!saleDate) { showToast('Please select a sale date.', 'error'); return false; }
+
+    document.getElementById('f_sale_date').value       = saleDate;
+    document.getElementById('f_billing_type').value    = document.getElementById('billingTypeDisplay').value;
+    document.getElementById('f_delivery_status').value = document.getElementById('deliveryStatusDisplay').value;
+    document.getElementById('f_mobile').value          = document.getElementById('mobileDisplay').value;
+
+    var chip = document.querySelector('.pay-chip.active');
+    document.getElementById('f_payment_mode').value = chip ? chip.dataset.mode : 'CASH';
+
+    var discount  = parseFloat(document.getElementById('discountInput').value) || 0;
+    var subtotal  = 0;
+    ids.forEach(function (id) { subtotal += cart[id].price * cart[id].qty; });
+    var grandTotal = Math.max(subtotal - discount, 0);
+    document.getElementById('f_discount').value     = discount.toFixed(2);
+    document.getElementById('f_final_amount').value = grandTotal.toFixed(2);
+
+    var container = document.getElementById('formProductRows');
+    container.innerHTML = '';
+    ids.forEach(function (id, i) {
+        var n = i + 1, item = cart[id];
+        container.innerHTML +=
+            '<input type="hidden" name="products[' + n + '][product_id]"   value="' + item.id + '">'
+          + '<input type="hidden" name="products[' + n + '][quantity]"      value="' + item.qty + '">'
+          + '<input type="hidden" name="products[' + n + '][selling_price]" value="' + item.price.toFixed(2) + '">';
+    });
+    return true;
+}
+
+/* ── Reset bill (keep page, clear cart) ────────────────────── */
+function resetBill() {
+    clearCart();
+    document.getElementById('discountInput').value     = '0';
+    document.getElementById('mobileDisplay').value     = '';
+    document.getElementById('billingTypeDisplay').value = 'GST';
+    document.getElementById('deliveryStatusDisplay').value = 'ON-HAND';
+    document.getElementById('saleDateDisplay').value   = new Date().toISOString().split('T')[0];
+    selectPayMode('CASH');
+    goBackToCategories();
+    showToast('Bill saved & printed! Ready for next sale.', 'success');
+}
+
+/* ── Submit sale ───────────────────────────────────────────── */
+function submitSale(action) {
+    if (Object.keys(cart).length === 0) {
+        showToast('Add at least one product to the cart.', 'error');
+        return;
+    }
+    if (!buildForm()) return;
+
+    var form = document.getElementById('salesForm');
+
+    if (action === 'save_print') {
+        // Remove old action input if any
+        var old = form.querySelector('input[name="action"]');
+        if (old) old.remove();
+        var inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'action'; inp.value = 'save_print';
+        form.appendChild(inp);
+
+        form.target = '_blank';
+        form.submit();
+        form.target = '_self';
+
+        // Stay on page — reset bill after a short delay for form to submit
+        setTimeout(resetBill, 600);
+    } else {
+        // Save only → regular submit in same tab (process_sale.php redirects as needed)
+        form.submit();
+    }
+}
+
+/* ── HTML escape ───────────────────────────────────────────── */
+function _esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
 </body>
 </html>

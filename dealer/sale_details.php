@@ -2,323 +2,185 @@
 require_once 'includes/auth_check.php';
 
 $sale_id = intval($_GET['id'] ?? 0);
+if ($sale_id <= 0) { header("Location: sales.php"); exit; }
 
-if($sale_id <= 0){
-    header("Location: sales.php");
-    exit;
-}
+$pageTitle  = 'Sale Details';
+$activePage = 'sales';
 
-// Get sale details
-$sql = "SELECT * FROM sales WHERE id = ? AND dealer_id = ? AND is_deleted = 0";
-$stmt = $conn->prepare($sql);
+// Get sale
+$stmt = $conn->prepare("SELECT * FROM sales WHERE id = ? AND dealer_id = ? AND is_deleted = 0");
 $stmt->bind_param("ii", $sale_id, $dealer_id);
 $stmt->execute();
 $sale = $stmt->get_result()->fetch_assoc();
-
-if(!$sale){
-    header("Location: sales.php");
-    exit;
-}
+if (!$sale) { header("Location: sales.php"); exit; }
 
 // Get sale items
-$items_sql = "
-    SELECT 
-        si.*,
-        p.product_name
+$items_stmt = $conn->prepare("
+    SELECT si.*, p.product_name
     FROM sale_items si
     JOIN products p ON p.id = si.product_id
     WHERE si.sale_id = ?
     ORDER BY si.id
-";
-$items_stmt = $conn->prepare($items_sql);
+");
 $items_stmt->bind_param("i", $sale_id);
 $items_stmt->execute();
 $items = $items_stmt->get_result();
+
+$bill_no = 'BL' . str_pad($sale_id, 6, '0', STR_PAD_LEFT);
+$detail_mobile = preg_replace('/\D+/', '', (string)($sale['mobile_no'] ?? ''));
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sale Details - <?= 'BL' . str_pad($sale_id, 6, '0', STR_PAD_LEFT) ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#4F46E5',
-                        secondary: '#6366F1',
-                    }
-                }
-            }
-        }
-    </script>
-    <?php includePermissionJS(); ?>
+<?php require_once 'includes/header.php'; ?>
 </head>
-<body class="bg-gray-50">
-    
-    <!-- Sidebar -->
-    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-screen bg-white border-r border-gray-200 transition-transform duration-300 z-50">
-        <div class="px-6 py-6 border-b border-gray-200">
-            <h2 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                DealerPro
-            </h2>
-        </div>
-        
-        <nav class="p-3 mt-4">
-            <a href="dashboard.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-home w-5 mr-3"></i>
-                <span class="font-medium">Dashboard</span>
-            </a>
-            <a href="products.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-box w-5 mr-3"></i>
-                <span class="font-medium">Products</span>
-            </a>
-            <a href="companies.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-building w-5 mr-3"></i>
-                <span class="font-medium">Companies</span>
-            </a>
-            <a href="purchases.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-shopping-cart w-5 mr-3"></i>
-                <span class="font-medium">Purchases</span>
-            </a>
-            <a href="sales.php" class="flex items-center px-4 py-3 mb-2 text-white bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg shadow-indigo-500/30">
-                <i class="fas fa-cash-register w-5 mr-3"></i>
-                <span class="font-medium">Sales</span>
-            </a>
-            <a href="staff.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-users w-5 mr-3"></i>
-                <span class="font-medium">Staff Management</span>
-            </a>
-            <a href="reports.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-chart-line w-5 mr-3"></i>
-                <span class="font-medium">Reports</span>
-            </a>
-        </nav>
-    </aside>
+<body class="bg-[var(--bg)]">
+<?php require_once 'includes/sidebar.php'; ?>
 
-    <!-- Main Content -->
-    <div class="ml-64">
-        <!-- Top Navigation -->
-        <header class="sticky top-0 bg-white border-b border-gray-200 px-8 py-4 shadow-sm z-40">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <button id="menuToggle" class="lg:hidden text-gray-600 hover:text-gray-900">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                    <h1 class="text-2xl font-semibold text-gray-900">Sale Details</h1>
-                </div>
-                <div class="relative">
-                    <button id="profileDropdown" class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
-                        <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
-                             alt="Profile" class="w-9 h-9 rounded-full">
-                        <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
-                        <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
-                    </button>
-                    <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                        <a href="logout.php" class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </header>
+<div class="md:ml-64 pb-16 md:pb-0">
+    <main class="p-4 md:p-8">
 
-        <!-- Page Content -->
-        <main class="p-8">
-            
-            <!-- Back Button -->
-            <div class="mb-6 flex items-center justify-between">
-                <a href="sales.php" class="inline-flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Back to Sales</span>
+        <!-- Top action bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <a href="sales.php"
+               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--subtext)] bg-white border border-[var(--border)] rounded-xl hover:bg-gray-50 transition-colors self-start">
+                <i class="fas fa-arrow-left text-xs"></i> Back to Sales
+            </a>
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="shareCurrentBillToWhatsapp(<?= (int)$sale_id ?>, '<?= htmlspecialchars($detail_mobile, ENT_QUOTES) ?>')"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors">
+                    <i class="fab fa-whatsapp"></i>
+                    <span class="hidden sm:inline">WhatsApp</span>
+                </button>
+                <a href="print_bill.php?sale_id=<?= $sale_id ?>" target="_blank"
+                   class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors">
+                    <i class="fas fa-print"></i>
+                    <span class="hidden sm:inline">Print Bill</span>
                 </a>
+                <a href="print_bill_thermal.php?sale_id=<?= $sale_id ?>" target="_blank"
+                   class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-xl transition-colors">
+                    <i class="fas fa-receipt"></i>
+                    <span class="hidden sm:inline">Thermal</span>
+                </a>
+            </div>
+        </div>
 
-                <div class="flex items-center gap-2">
-                    <?php $detail_mobile = preg_replace('/\D+/', '', (string)($sale['mobile_no'] ?? '')); ?>
-                    <button onclick="shareCurrentBillToWhatsapp(<?= (int)$sale_id ?>, '<?= htmlspecialchars($detail_mobile, ENT_QUOTES) ?>')"
-                            class="inline-flex items-center gap-2 px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
-                            title="Share bill on WhatsApp">
-                        <i class="fab fa-whatsapp"></i>
-                        <span>Share WhatsApp</span>
-                    </button>
-
-                    <a href="print_bill.php?sale_id=<?= $sale_id ?>" 
-                    target="_blank"
-                    class="inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
-                        <i class="fas fa-print"></i>
-                        <span>Print Bill</span>
-                    </a>
-                    <a href="print_bill_thermal.php?sale_id=<?= $sale_id ?>" 
-                    target="_blank"
-                    class="inline-flex items-center gap-2 px-4 py-2 text-white bg-gray-600 hover:bg-blue-700 rounded-lg transition-colors">
-                        <i class="fas fa-print"></i>
-                        <span>Print Bill Thermal</span>
-                    </a>
+        <!-- Sale Summary Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] p-5 md:p-6 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-bold text-[var(--text)]">Bill #<?= $bill_no ?></h2>
+                    <p class="text-sm text-[var(--subtext)] mt-1">
+                        <?= date("d F Y", strtotime($sale['sale_date'])) ?>
+                    </p>
                 </div>
-               
+                <span class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-[var(--primary)] text-sm font-semibold rounded-xl self-start">
+                    <?= htmlspecialchars($sale['billing_type']) ?>
+                </span>
             </div>
 
-            <!-- Sale Summary Card -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900">Bill #<?= 'BL' . str_pad($sale_id, 6, '0', STR_PAD_LEFT) ?></h2>
-                        <p class="text-gray-500 mt-1"><?= date("d F Y, h:i A", strtotime($sale['sale_date'])) ?></p>
-                    </div>
-                    <div class="text-right">
-                        <span class="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium">
-                            <?= htmlspecialchars($sale['billing_type']) ?>
-                        </span>
-                    </div>
-
-
+            <!-- Meta grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-5 border-t border-[var(--border)]">
+                <div>
+                    <p class="text-xs text-[var(--subtext)] mb-1 uppercase tracking-wide font-medium">Payment</p>
+                    <p class="text-sm font-semibold text-[var(--text)]"><?= htmlspecialchars($sale['payment_mode']) ?></p>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6 pt-6 border-t border-gray-200">
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Payment Mode</p>
-                        <p class="text-lg font-semibold text-gray-900"><?= htmlspecialchars($sale['payment_mode']) ?></p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Delivery Status</p>
-                        <p class="text-lg font-semibold text-gray-900"><?= htmlspecialchars($sale['delivery']) ?></p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Discount</p>
-                        <p class="text-lg font-semibold text-red-600">₹<?= number_format($sale['bill_amount'] - $sale['total_amount']?? 0, 2) ?></p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Profit</p>
-                        <p class="text-lg font-semibold text-green-600">₹<?= number_format($sale['profit'], 2) ?></p>
-                    </div>
+                <div>
+                    <p class="text-xs text-[var(--subtext)] mb-1 uppercase tracking-wide font-medium">Delivery</p>
+                    <p class="text-sm font-semibold text-[var(--text)]"><?= htmlspecialchars($sale['delivery']) ?></p>
+                </div>
+                <div>
+                    <p class="text-xs text-[var(--subtext)] mb-1 uppercase tracking-wide font-medium">Discount</p>
+                    <p class="text-sm font-semibold text-red-600">
+                        ₹<?= number_format(max(0, ($sale['bill_amount'] - $sale['total_amount'])), 2) ?>
+                    </p>
+                </div>
+                <div>
+                    <p class="text-xs text-[var(--subtext)] mb-1 uppercase tracking-wide font-medium">Profit</p>
+                    <p class="text-sm font-semibold text-green-600">₹<?= number_format($sale['profit'], 2) ?></p>
                 </div>
             </div>
+        </div>
 
-            <!-- Items Table -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">Sale Items</h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Base Price</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Selling Price</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quantity</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Line Total</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Profit</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <?php 
-                            $total_qty = 0;
-                            $total_amount = 0;
-                            while($item = $items->fetch_assoc()): 
-                                $line_total = $item['selling_price'] * $item['quantity'];
-                                $line_profit = ($item['selling_price'] - $item['base_price']) * $item['quantity'];
-                                $total_qty += $item['quantity'];
-                                $total_amount += $line_total;
-                            ?>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">
-                                    <?= htmlspecialchars($item['product_name']) ?>
-                                </td>
-                                <td class="py-4 px-6 text-sm text-gray-900">
-                                    ₹<?= number_format($item['base_price'], 2) ?>
-                                </td>
-                                <td class="py-4 px-6 text-sm text-gray-900">
-                                    ₹<?= number_format($item['selling_price'], 2) ?>
-                                </td>
-                                <td class="py-4 px-6 text-sm text-gray-900">
-                                    <?= $item['quantity'] ?>
-                                </td>
-                                <td class="py-4 px-6 text-sm font-medium text-gray-900">
-                                    ₹<?= number_format($line_total, 2) ?>
-                                </td>
-                                <td class="py-4 px-6 text-sm font-medium text-green-600">
-                                    ₹<?= number_format($line_profit, 2) ?>
-                                </td>
-                            </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                        <tfoot class="bg-gray-50 border-t-2 border-gray-200">
-                            <tr>
-                                <td colspan="3" class="py-4 px-6 text-sm font-bold text-gray-900">TOTAL</td>
-                                <td class="py-4 px-6 text-sm font-bold text-gray-900"><?= $total_qty ?></td>
-                                <td class="py-4 px-6 text-sm font-bold text-gray-900">₹<?= number_format($total_amount, 2) ?></td>
-                                <td class="py-4 px-6 text-sm font-bold text-green-600">₹<?= number_format($sale['profit'], 2) ?></td>
-                            </tr>
-                            <?php if(($sale['bill_amount'] - $sale['total_amount']) > 0): ?>
-                            <tr>
-                                <td colspan="4" class="py-2 px-6 text-sm text-right text-gray-700">Discount:</td>
-                                <td colspan="2" class="py-2 px-6 text-sm font-semibold text-red-600">-₹<?= number_format($sale['bill_amount'] - $sale['total_amount'], 2) ?></td>
-                            </tr>
-                            <?php endif; ?>
-                            <tr class="bg-primary">
-                                <td colspan="4" class="py-4 px-6 text-sm text-right font-bold text-white">FINAL AMOUNT:</td>
-                                <td colspan="2" class="py-4 px-6 text-lg font-bold text-white">₹<?= number_format($sale['total_amount'], 2) ?></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+        <!-- Items Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden">
+            <div class="px-5 md:px-6 py-4 border-b border-[var(--border)]">
+                <h3 class="text-base font-semibold text-[var(--text)]">Sale Items</h3>
             </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[560px]">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-[var(--border)]">
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Product</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Base Price</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Sell Price</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Qty</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Line Total</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Profit</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <?php
+                        $total_qty = 0;
+                        $total_amount = 0;
+                        while ($item = $items->fetch_assoc()):
+                            $line_total   = $item['selling_price'] * $item['quantity'];
+                            $line_profit  = ($item['selling_price'] - $item['base_price']) * $item['quantity'];
+                            $total_qty   += $item['quantity'];
+                            $total_amount += $line_total;
+                        ?>
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="py-3 px-4 text-sm font-medium text-[var(--text)]"><?= htmlspecialchars($item['product_name']) ?></td>
+                            <td class="py-3 px-4 text-sm text-[var(--subtext)] text-right">₹<?= number_format($item['base_price'], 2) ?></td>
+                            <td class="py-3 px-4 text-sm text-[var(--text)] text-right">₹<?= number_format($item['selling_price'], 2) ?></td>
+                            <td class="py-3 px-4 text-sm text-[var(--text)] text-right font-medium"><?= $item['quantity'] ?></td>
+                            <td class="py-3 px-4 text-sm font-semibold text-[var(--text)] text-right">₹<?= number_format($line_total, 2) ?></td>
+                            <td class="py-3 px-4 text-sm font-semibold text-green-600 text-right">₹<?= number_format($line_profit, 2) ?></td>
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                    <tfoot class="border-t-2 border-[var(--border)] bg-gray-50">
+                        <tr>
+                            <td colspan="3" class="py-3 px-4 text-sm font-bold text-[var(--text)]">TOTAL</td>
+                            <td class="py-3 px-4 text-sm font-bold text-[var(--text)] text-right"><?= $total_qty ?></td>
+                            <td class="py-3 px-4 text-sm font-bold text-[var(--text)] text-right">₹<?= number_format($total_amount, 2) ?></td>
+                            <td class="py-3 px-4 text-sm font-bold text-green-600 text-right">₹<?= number_format($sale['profit'], 2) ?></td>
+                        </tr>
+                        <?php if (($sale['bill_amount'] - $sale['total_amount']) > 0): ?>
+                        <tr>
+                            <td colspan="4" class="py-2 px-4 text-sm text-right text-[var(--subtext)]">Discount:</td>
+                            <td colspan="2" class="py-2 px-4 text-sm font-semibold text-red-600 text-right">
+                                -₹<?= number_format($sale['bill_amount'] - $sale['total_amount'], 2) ?>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
+                        <tr class="bg-[var(--primary)]">
+                            <td colspan="4" class="py-4 px-4 text-sm font-bold text-white text-right">FINAL AMOUNT</td>
+                            <td colspan="2" class="py-4 px-4 text-lg font-extrabold text-white text-right">
+                                ₹<?= number_format($sale['total_amount'], 2) ?>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
 
-        </main>
-    </div>
+    </main>
+</div>
 
-    <script>
-        function shareCurrentBillToWhatsapp(saleId, mobileNo) {
-    if (!mobileNo) {
-        alert('Mobile number is not available for this sale.');
+<?php require_once 'includes/footer.php'; ?>
+
+<script>
+function shareCurrentBillToWhatsapp(saleId, mobileNo) {
+    var cleanPhone = String(mobileNo).replace(/\D/g, '');
+    if (!cleanPhone) {
+        showToast('Mobile number is not available for this sale.', 'error');
         return;
     }
-
-    const cleanPhone = String(mobileNo).replace(/\D/g, '');
-    const billUrl = `${window.location.origin}${window.location.pathname.replace('sale_details.php', 'print_bill.php')}?sale_id=${saleId}`;
-    const message = `Hello, here is your bill: ${billUrl}`;
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-
-    window.open(whatsappUrl, '_blank');
+    var billUrl = window.location.origin + window.location.pathname.replace('sale_details.php', 'print_bill.php') + '?sale_id=' + saleId;
+    var message = 'Hello, here is your bill: ' + billUrl;
+    window.open('https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent(message), '_blank');
 }
-
-        // Profile dropdown
-        const profileDropdown = document.getElementById('profileDropdown');
-        const profileMenu = document.getElementById('profileMenu');
-
-        profileDropdown.addEventListener('click', (e) => {
-            e.stopPropagation();
-            profileMenu.classList.toggle('hidden');
-        });
-
-        document.addEventListener('click', () => {
-            profileMenu.classList.add('hidden');
-        });
-
-        // Mobile menu
-        const sidebar = document.getElementById('sidebar');
-        const menuToggle = document.getElementById('menuToggle');
-        
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-        });
-
-        function handleResize() {
-            if (window.innerWidth < 1024) {
-                sidebar.classList.add('-translate-x-full');
-            } else {
-                sidebar.classList.remove('-translate-x-full');
-            }
-        }
-        
-        window.addEventListener('resize', handleResize);
-        handleResize();
-    </script>
-
+</script>
 </body>
 </html>

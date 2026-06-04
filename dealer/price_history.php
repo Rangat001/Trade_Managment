@@ -1,375 +1,270 @@
 <?php
 require_once 'includes/auth_check.php';
-    
-    // Get product_id from URL
-    $product_id = isset($_GET['id']) ? $_GET['id'] : 0;
-    
-    // Get product details
-    $product_query = "SELECT p.*, c.company_name 
-                     FROM products p 
-                     LEFT JOIN companies c ON p.company_id = c.id 
-                     WHERE p.id = '$product_id' AND p.dealer_id = {$_SESSION['rgt_logedin_user_dealer_id']}";
-    $product_result = mysqli_query($conn, $product_query);
-    $product = mysqli_fetch_assoc($product_result);
-    
-    if(!$product){
-        header("Location: products.php");
-        exit();
-    }
-    
-    // Get price history
-    $history_query = "SELECT * FROM product_price_history 
-                     WHERE product_id = '$product_id' AND dealer_id = {$_SESSION['rgt_logedin_user_dealer_id']} 
-                     ORDER BY effective_from ASC";
-    $history_result = mysqli_query($conn, $history_query);
-?>
 
+$product_id = intval($_GET['id'] ?? 0);
+
+$pageTitle  = 'Price History';
+$activePage = 'products';
+
+// Get product details (using prepared statement for safety)
+$prod_stmt = $conn->prepare("
+    SELECT p.*, c.company_name
+    FROM products p
+    LEFT JOIN companies c ON p.company_id = c.id
+    WHERE p.id = ? AND p.dealer_id = ?
+");
+$prod_stmt->bind_param("ii", $product_id, $dealer_id);
+$prod_stmt->execute();
+$product = $prod_stmt->get_result()->fetch_assoc();
+
+if (!$product) { header("Location: products.php"); exit; }
+
+// Get price history
+$hist_stmt = $conn->prepare("
+    SELECT * FROM product_price_history
+    WHERE product_id = ? AND dealer_id = ?
+    ORDER BY effective_from ASC
+");
+$hist_stmt->bind_param("ii", $product_id, $dealer_id);
+$hist_stmt->execute();
+$history_result = $hist_stmt->get_result();
+
+// Build arrays for chart + table
+$dates          = [];
+$base_prices    = [];
+$selling_prices = [];
+$history_rows   = [];
+
+while ($row = $history_result->fetch_assoc()) {
+    $dates[]          = date('d M Y', strtotime($row['effective_from']));
+    $base_prices[]    = (float)$row['base_price'];
+    $selling_prices[] = (float)$row['selling_price'];
+    $history_rows[]   = $row;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Price History - <?php echo $product['product_name']; ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#4F46E5',
-                        secondary: '#6366F1',
-                    }
-                }
-            }
-        }
-    </script>
-    <?php includePermissionJS(); ?>
+<?php require_once 'includes/header.php'; ?>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
-<body class="bg-gray-50">
-    
-    <!-- Sidebar -->
-    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-screen bg-white border-r border-gray-200 transition-transform duration-300 z-50">
-        <div class="px-6 py-6 border-b border-gray-200">
-            <h2 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                DealerPro
-            </h2>
+<body class="bg-[var(--bg)]">
+<?php require_once 'includes/sidebar.php'; ?>
+
+<div class="md:ml-64 pb-16 md:pb-0">
+    <main class="p-4 md:p-8">
+
+        <!-- Back button -->
+        <div class="mb-6">
+            <a href="products.php"
+               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--subtext)] bg-white border border-[var(--border)] rounded-xl hover:bg-gray-50 transition-colors">
+                <i class="fas fa-arrow-left text-xs"></i> Back to Products
+            </a>
         </div>
-        
-        <nav class="p-3 mt-4">
-            <a href="dashboard.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-home w-5 mr-3"></i>
-                <span class="font-medium">Dashboard</span>
-            </a>
-            <a href="products.php" class="flex items-center px-4 py-3 mb-2 text-white bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg shadow-indigo-500/30">
-                <i class="fas fa-box w-5 mr-3"></i>
-                <span class="font-medium">Products</span>
-            </a>
-            <a href="companies.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-building w-5 mr-3"></i>
-                <span class="font-medium">Companies</span>
-            </a>
-            <a href="purchases.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-shopping-cart w-5 mr-3"></i>
-                <span class="font-medium">Purchases</span>
-            </a>
-            <a href="sales.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-cash-register w-5 mr-3"></i>
-                <span class="font-medium">Sales</span>
-            </a>
-            <a href="staff.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-users w-5 mr-3"></i>
-                <span class="font-medium">Staff Management</span>
-            </a>
-            <a href="reports.php" class="flex items-center px-4 py-3 mb-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                <i class="fas fa-chart-line w-5 mr-3"></i>
-                <span class="font-medium">Reports</span>
-            </a>
-        </nav>
-    </aside>
 
-    <!-- Main Content -->
-    <div class="ml-64">
-        <!-- Top Navigation -->
-        <header class="sticky top-0 bg-white border-b border-gray-200 px-8 py-4 shadow-sm z-40">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <button id="menuToggle" class="lg:hidden text-gray-600 hover:text-gray-900">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                    <h1 class="text-2xl font-semibold text-gray-900">Price History</h1>
-                </div>
-                <div class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full cursor-pointer hover:bg-gray-100 transition-colors">
-                    <img src="https://ui-avatars.com/api/?name=Dealer+Admin&background=4F46E5&color=fff" 
-                         alt="Profile" class="w-9 h-9 rounded-full">
-                    <span class="font-medium text-gray-700 hidden sm:block">Dealer Admin</span>
-                    <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
-                </div>
-            </div>
-        </header>
-
-        <!-- Page Content -->
-        <main class="p-8">
-            
-            <!-- Back Button -->
-            <div class="mb-6">
-                <a href="products.php" class="inline-flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Back to Products</span>
-                </a>
-            </div>
-
-            <!-- Product Info Card -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <h2 class="text-2xl font-semibold text-gray-900 mb-2"><?php echo $product['product_name']; ?></h2>
-                        <p class="text-gray-600">Company: <span class="font-medium"><?php echo $product['company_name']; ?></span></p>
+        <!-- Product Info Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] p-5 md:p-6 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-box text-[var(--primary)]"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-[var(--text)]"><?= htmlspecialchars($product['product_name']) ?></h2>
+                            <p class="text-sm text-[var(--subtext)]">
+                                Company: <span class="font-medium text-[var(--text)]"><?= htmlspecialchars($product['company_name']) ?></span>
+                            </p>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-sm text-gray-500 mb-1">Current Prices</p>
-                        <p class="text-lg font-semibold text-primary">Purchase: ₹<?php echo number_format($product['base_price'], 2); ?></p>
-                        <p class="text-lg font-semibold text-secondary">Selling: ₹<?php echo number_format($product['selling_price'], 2); ?></p>
+                </div>
+                <div class="flex gap-4 sm:text-right">
+                    <div class="bg-indigo-50 rounded-xl px-4 py-3 border border-indigo-100">
+                        <p class="text-xs text-[var(--subtext)] mb-0.5">Purchase Price</p>
+                        <p class="text-base font-bold text-[var(--primary)]">₹<?= number_format($product['base_price'], 2) ?></p>
+                    </div>
+                    <div class="bg-emerald-50 rounded-xl px-4 py-3 border border-emerald-100">
+                        <p class="text-xs text-[var(--subtext)] mb-0.5">Selling Price</p>
+                        <p class="text-base font-bold text-emerald-600">₹<?= number_format($product['selling_price'], 2) ?></p>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Price Chart -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-                <h3 class="text-xl font-semibold text-gray-900 mb-6">Price Trend</h3>
-                <div class="h-96">
-                    <canvas id="priceChart"></canvas>
-                </div>
+        <?php if (count($history_rows) > 0): ?>
+
+        <!-- Price Chart -->
+        <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] p-5 md:p-6 mb-6">
+            <h3 class="text-base font-semibold text-[var(--text)] mb-5 flex items-center gap-2">
+                <i class="fas fa-chart-line text-[var(--primary)]"></i>
+                Price Trend
+            </h3>
+            <div class="h-72 md:h-96">
+                <canvas id="priceChart"></canvas>
             </div>
+        </div>
 
-            <!-- Price History Table -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-xl font-semibold text-gray-900">Price History Records</h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Base Price (₹)</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Selling Price (₹)</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Profit Margin</th>
-                                <th class="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price Change</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <?php
-                            $prev_base_price = 0;
-                            $prev_selling_price = 0;
-                            $count = 0;
-                            
-                            // Reset pointer to read data again for table
-                            mysqli_data_seek($history_result, 0);
-                            
-                            if(mysqli_num_rows($history_result) > 0){
-                                while($row = mysqli_fetch_assoc($history_result)){
-                                    $profit_margin = $row['selling_price'] - $row['base_price'];
-                                    $profit_percentage = ($row['base_price'] > 0) ? (($profit_margin / $row['base_price']) * 100) : 0;
-                                    
-                                    // Calculate price change
-                                    $base_change = 0;
-                                    $selling_change = 0;
-                                    if($count > 0){
-                                        $base_change = $row['base_price'] - $prev_base_price;
-                                        $selling_change = $row['selling_price'] - $prev_selling_price;
-                                    }
-                                    
-                                    echo '<tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-6 text-sm text-gray-900">'.date('d M Y', strtotime($row['effective_from'])).'</td>
-                                        <td class="py-4 px-6 text-sm font-medium text-gray-900">₹'.number_format($row['base_price'], 2).'</td>
-                                        <td class="py-4 px-6 text-sm font-medium text-gray-900">₹'.number_format($row['selling_price'], 2).'</td>
-                                        <td class="py-4 px-6 text-sm text-gray-900">
-                                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-medium">
-                                                +₹'.number_format($profit_margin, 2).' ('.number_format($profit_percentage, 1).'%)
-                                            </span>
-                                        </td>
-                                        <td class="py-4 px-6 text-sm">';
-                                    
-                                    if($count == 0){
-                                        echo '<span class="text-gray-500">Initial Price</span>';
-                                    } else {
-                                        if($base_change > 0 || $selling_change > 0){
-                                            echo '<span class="inline-flex items-center gap-1 text-red-600">
-                                                <i class="fas fa-arrow-up"></i>
-                                                Base: ₹'.number_format(abs($base_change), 2).' | Selling: ₹'.number_format(abs($selling_change), 2).'
-                                            </span>';
-                                        } elseif($base_change < 0 || $selling_change < 0){
-                                            echo '<span class="inline-flex items-center gap-1 text-green-600">
-                                                <i class="fas fa-arrow-down"></i>
-                                                Base: ₹'.number_format(abs($base_change), 2).' | Selling: ₹'.number_format(abs($selling_change), 2).'
-                                            </span>';
-                                        } else {
-                                            echo '<span class="text-gray-500">No Change</span>';
-                                        }
-                                    }
-                                    
-                                    echo '</td></tr>';
-                                    
-                                    $prev_base_price = $row['base_price'];
-                                    $prev_selling_price = $row['selling_price'];
-                                    $count++;
-                                }
-                            } else {
-                                echo '<tr><td colspan="5" class="py-8 px-6 text-center text-gray-500">No price history available.</td></tr>';
-                            }
-                            ?>
-                        </tbody>
-                    </table>
-                </div>
+        <!-- Price History Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden">
+            <div class="px-5 md:px-6 py-4 border-b border-[var(--border)]">
+                <h3 class="text-base font-semibold text-[var(--text)]">Price History Records</h3>
             </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[520px]">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-[var(--border)]">
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Date</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Base Price</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Selling Price</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Margin</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Change</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <?php
+                        $prev_base    = 0;
+                        $prev_selling = 0;
+                        foreach ($history_rows as $i => $row):
+                            $margin     = $row['selling_price'] - $row['base_price'];
+                            $margin_pct = $row['base_price'] > 0 ? ($margin / $row['base_price']) * 100 : 0;
+                            $base_chg   = $i > 0 ? $row['base_price']    - $prev_base    : 0;
+                            $sell_chg   = $i > 0 ? $row['selling_price'] - $prev_selling : 0;
+                        ?>
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="py-3 px-4 text-sm text-[var(--text)] whitespace-nowrap">
+                                <?= date('d M Y', strtotime($row['effective_from'])) ?>
+                            </td>
+                            <td class="py-3 px-4 text-sm font-medium text-[var(--text)] text-right">
+                                ₹<?= number_format($row['base_price'], 2) ?>
+                            </td>
+                            <td class="py-3 px-4 text-sm font-medium text-[var(--text)] text-right">
+                                ₹<?= number_format($row['selling_price'], 2) ?>
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                                    +₹<?= number_format($margin, 2) ?> (<?= number_format($margin_pct, 1) ?>%)
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-sm">
+                                <?php if ($i === 0): ?>
+                                    <span class="text-[var(--subtext)] text-xs">Initial price</span>
+                                <?php elseif ($base_chg == 0 && $sell_chg == 0): ?>
+                                    <span class="text-[var(--subtext)] text-xs">No change</span>
+                                <?php else:
+                                    $up = ($base_chg > 0 || $sell_chg > 0);
+                                ?>
+                                    <span class="inline-flex items-center gap-1 text-xs font-medium <?= $up ? 'text-red-600' : 'text-green-600' ?>">
+                                        <i class="fas fa-arrow-<?= $up ? 'up' : 'down' ?> text-[10px]"></i>
+                                        Base: ₹<?= number_format(abs($base_chg), 2) ?> &nbsp;|&nbsp; Sell: ₹<?= number_format(abs($sell_chg), 2) ?>
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php
+                            $prev_base    = $row['base_price'];
+                            $prev_selling = $row['selling_price'];
+                        endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-        </main>
-    </div>
+        <?php else: ?>
+        <!-- Empty state -->
+        <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] p-12 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-chart-line text-2xl text-gray-300"></i>
+            </div>
+            <h3 class="text-base font-semibold text-[var(--text)] mb-1">No price history yet</h3>
+            <p class="text-sm text-[var(--subtext)]">Price changes will appear here when you edit this product's prices.</p>
+        </div>
+        <?php endif; ?>
 
-    <script>
-        // Prepare data for chart
-        <?php
-        // Reset pointer to read data again for chart
-        mysqli_data_seek($history_result, 0);
-        
-        $dates = [];
-        $base_prices = [];
-        $selling_prices = [];
-        
-        while($row = mysqli_fetch_assoc($history_result)){
-            $dates[] = date('d M Y', strtotime($row['effective_from']));
-            $base_prices[] = floatval($row['base_price']);
-            $selling_prices[] = floatval($row['selling_price']);
-        }
-        ?>
-        
-        const dates = <?php echo json_encode($dates); ?>;
-        const basePrices = <?php echo json_encode($base_prices); ?>;
-        const sellingPrices = <?php echo json_encode($selling_prices); ?>;
-        
-        // Create chart
-        const ctx = document.getElementById('priceChart').getContext('2d');
-        const priceChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [
-                    {
-                        label: 'Base Price (₹)',
-                        data: basePrices,
-                        borderColor: '#4F46E5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 5,
-                        pointHoverRadius: 7
-                    },
-                    {
-                        label: 'Selling Price (₹)',
-                        data: sellingPrices,
-                        borderColor: '#10B981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 5,
-                        pointHoverRadius: 7
-                    }
-                ]
+    </main>
+</div>
+
+<?php require_once 'includes/footer.php'; ?>
+
+<script>
+<?php if (count($history_rows) > 0): ?>
+var dates         = <?= json_encode($dates) ?>;
+var basePrices    = <?= json_encode($base_prices) ?>;
+var sellingPrices = <?= json_encode($selling_prices) ?>;
+
+var ctx = document.getElementById('priceChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: dates,
+        datasets: [
+            {
+                label: 'Base Price (₹)',
+                data: basePrices,
+                borderColor: '#4F46E5',
+                backgroundColor: 'rgba(79,70,229,0.08)',
+                borderWidth: 2.5,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#4F46E5'
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            font: {
-                                size: 14,
-                                family: 'Inter, system-ui, sans-serif'
-                            },
-                            padding: 20,
-                            usePointStyle: true
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 12,
-                        titleFont: {
-                            size: 14
-                        },
-                        bodyFont: {
-                            size: 13
-                        },
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': ₹' + context.parsed.y.toFixed(2);
-                            }
-                        }
+            {
+                label: 'Selling Price (₹)',
+                data: sellingPrices,
+                borderColor: '#10B981',
+                backgroundColor: 'rgba(16,185,129,0.08)',
+                borderWidth: 2.5,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#10B981'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    font: { size: 13, family: 'Inter, sans-serif' },
+                    padding: 20,
+                    usePointStyle: true
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(17,24,39,0.9)',
+                padding: 12,
+                titleFont: { size: 13 },
+                bodyFont: { size: 12 },
+                callbacks: {
+                    label: function(ctx) {
+                        return ctx.dataset.label + ': ₹' + ctx.parsed.y.toFixed(2);
                     }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: false,
+                ticks: {
+                    callback: function(v) { return '₹' + v.toFixed(2); },
+                    font: { size: 11 }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        ticks: {
-                            callback: function(value) {
-                                return '₹' + value.toFixed(2);
-                            },
-                            font: {
-                                size: 12
-                            }
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: {
-                                size: 12
-                            }
-                        },
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Mobile menu toggle
-        const sidebar = document.getElementById('sidebar');
-        const menuToggle = document.getElementById('menuToggle');
-        
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-        });
-
-        // Close sidebar on mobile when clicking outside
-        document.addEventListener('click', (e) => {
-            if (window.innerWidth < 1024) {
-                if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
-                    sidebar.classList.add('-translate-x-full');
-                }
-            }
-        });
-
-        // Responsive sidebar
-        function handleResize() {
-            if (window.innerWidth < 1024) {
-                sidebar.classList.add('-translate-x-full');
-            } else {
-                sidebar.classList.remove('-translate-x-full');
+                grid: { color: 'rgba(0,0,0,0.04)' }
+            },
+            x: {
+                ticks: { font: { size: 11 } },
+                grid: { display: false }
             }
         }
-        
-        window.addEventListener('resize', handleResize);
-        handleResize();
-    </script>
-
+    }
+});
+<?php endif; ?>
+</script>
 </body>
 </html>

@@ -1,269 +1,232 @@
 <?php
 session_start();
-
-// If a user session exists, send them to the dealer dashboard
 if (isset($_SESSION['rgt_logedin_user_id']) && trim($_SESSION['rgt_logedin_user_id']) !== '') {
-	header('Location: dealer/dashboard.php');
-	exit;
+    header('Location: dealer/dashboard.php');
+    exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Dealer Pro | Goods Trading Management System</title>
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnW5DqZuxMxDPZWS9Vyhi3F7S3w7Dnk3a1JpN96CB2TF+qsSVqS+8CA0nVddOZXS6SmttuPAHyBs+K6TfGsULA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-	<style>
-		:root {
-			--primary: #4f46e5;
-			--secondary: #6366f1;
-			--accent: #0ea5e9;
-			--text: #0f172a;
-			--muted: #475569;
-			--bg: #f8fafc;
-		}
-		* { box-sizing: border-box; }
-		body {
-			margin: 0;
-			font-family: 'Inter', system-ui, -apple-system, sans-serif;
-			background: var(--bg);
-			color: var(--text);
-			line-height: 1.6;
-		}
-		a { text-decoration: none; }
-		.page {
-			min-height: 100vh;
-			display: flex;
-			flex-direction: column;
-		}
-		header {
-			padding: 20px 32px;
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			position: sticky;
-			top: 0;
-			background: rgba(248, 250, 252, 0.9);
-			backdrop-filter: blur(12px);
-			border-bottom: 1px solid #e2e8f0;
-			z-index: 10;
-		}
-		.brand {
-			display: flex;
-			align-items: center;
-			gap: 12px;
-			font-weight: 700;
-			font-size: 20px;
-			color: var(--text);
-		}
-		.badge {
-			background: linear-gradient(135deg, var(--primary), var(--secondary));
-			color: #fff;
-			border-radius: 999px;
-			padding: 8px 14px;
-			font-size: 13px;
-			display: inline-flex;
-			align-items: center;
-			gap: 8px;
-		}
-		.cta {
-			display: inline-flex;
-			align-items: center;
-			gap: 10px;
-			padding: 12px 18px;
-			border-radius: 12px;
-			border: none;
-			font-weight: 600;
-			cursor: pointer;
-			transition: transform 0.15s ease, box-shadow 0.15s ease;
-		}
-		.cta.primary {
-			background: linear-gradient(135deg, var(--primary), var(--secondary));
-			color: #fff;
-			box-shadow: 0 10px 30px rgba(79, 70, 229, 0.25);
-		}
-		.cta.secondary {
-			background: #e2e8f0;
-			color: var(--text);
-		}
-		.cta:hover { transform: translateY(-2px); }
-		.hero {
-			padding: 64px 32px 32px;
-			max-width: 1200px;
-			margin: 0 auto;
-			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-			gap: 32px;
-			align-items: center;
-		}
-		.hero-card {
-			background: #fff;
-			border: 1px solid #e2e8f0;
-			border-radius: 24px;
-			padding: 28px;
-			box-shadow: 0 15px 45px rgba(15, 23, 42, 0.06);
-		}
-		h1 { font-size: 36px; margin: 12px 0 16px; }
-		.lead { color: var(--muted); font-size: 17px; margin-bottom: 20px; }
-		.pill-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
-		.pill { background: #eef2ff; color: #4338ca; padding: 8px 12px; border-radius: 10px; font-weight: 600; font-size: 13px; }
-		.section { padding: 40px 32px; max-width: 1200px; margin: 0 auto; }
-		.section h2 { margin-bottom: 12px; font-size: 26px; }
-		.section p { color: var(--muted); margin-bottom: 20px; }
-		.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-		.card {
-			background: #fff;
-			border: 1px solid #e2e8f0;
-			border-radius: 16px;
-			padding: 18px;
-			box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
-		}
-		.card h3 { margin: 0 0 8px; font-size: 17px; }
-		.card p { margin: 0; color: var(--muted); font-size: 14px; }
-		.icon {
-			width: 36px; height: 36px;
-			border-radius: 10px;
-			display: grid; place-items: center;
-			color: #fff;
-			margin-bottom: 10px;
-			background: linear-gradient(135deg, var(--primary), var(--accent));
-		}
-		.cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
-		footer {
-			padding: 28px 32px;
-			text-align: center;
-			color: var(--muted);
-			font-size: 14px;
-		}
-		@media (max-width: 640px) {
-			header { padding: 16px 20px; }
-			.hero { padding: 48px 20px 24px; }
-			.section { padding: 32px 20px; }
-			h1 { font-size: 30px; }
-		}
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DealerPro — Goods Trading Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#4F46E5', secondary: '#6366F1' },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #EEF2FF;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #4F46E5, #6366F1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-bg {
+            background: radial-gradient(ellipse 80% 60% at 50% -10%, #EEF2FF 0%, transparent 70%);
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(79,70,229,.1);
+        }
+        .feature-card { transition: transform .2s ease, box-shadow .2s ease; }
+    </style>
 </head>
-<body>
-	<div class="page">
-		<header>
-			<div class="brand">
-				<span style="display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-weight:700;">DP</span>
-				Dealer Pro
-			</div>
-			<div class="cta-row">
-				<a class="cta secondary" href="auth/sign-in.php">Sign In</a>
-				<a class="cta primary" href="auth/sign-up.php">Start Free</a>
-			</div>
-		</header>
+<body class="bg-white font-sans text-gray-900 antialiased">
 
-		<section class="hero">
-			<div class="hero-card">
-				<span class="badge"><i class="fa-solid fa-cloud"></i> SaaS for Dealers & Traders</span>
-				<h1>Goods Trading Management made simple.</h1>
-				<p class="lead">Dealer Pro keeps your stock, payments, companies, and profits in one place. No accounting background needed.</p>
-				<div class="pill-list">
-					<span class="pill">Stock & Products</span>
-					<span class="pill">Purchases & Orders</span>
-					<span class="pill">Payments & Ledger</span>
-					<span class="pill">Sales & Profit</span>
-					<span class="pill">Staff Access</span>
-					<span class="pill">Reports</span>
-				</div>
-				<div class="cta-row">
-					<a class="cta primary" href="auth/sign-up.php">Get Started</a>
-					<a class="cta secondary" href="auth/sign-in.php">I already have an account</a>
-				</div>
-				<p style="color:var(--muted);font-size:13px;margin-top:10px;">Access anywhere. No paperwork. No manual registers.</p>
-			</div>
-			<div class="hero-card" style="background:linear-gradient(135deg,#fff, #eef2ff);">
-				<h3 style="margin:0 0 10px;">Perfect for:</h3>
-				<div class="pill-list">
-					<span class="pill">Grocery traders</span>
-					<span class="pill">Wholesale distributors</span>
-					<span class="pill">Electronics dealers</span>
-					<span class="pill">Construction suppliers</span>
-				</div>
-				<p class="lead">Save time, avoid money loss, and understand your business better.</p>
-				<div class="card" style="margin-top:12px;">
-					<div class="icon"><i class="fa-solid fa-shield"></i></div>
-					<h3>Staff & Security</h3>
-					<p>Add staff with limited access. Each dealer sees only their own data. Your business stays private.</p>
-				</div>
-			</div>
-		</section>
+<!-- ── Navbar ──────────────────────────────────────────────── -->
+<nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm">DP</div>
+            <span class="text-lg font-bold text-gray-900">DealerPro</span>
+        </div>
+        <!-- Nav links -->
+        <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+            <a href="#features" class="hover:text-primary transition-colors">Features</a>
+            <a href="#security" class="hover:text-primary transition-colors">Security</a>
+            <a href="#cta" class="hover:text-primary transition-colors">Get Started</a>
+        </div>
+        <!-- Auth buttons -->
+        <div class="flex items-center gap-3">
+            <a href="auth/sign-in.php"
+               class="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                Sign In
+            </a>
+            <a href="auth/sign-up.php"
+               class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary to-secondary rounded-xl shadow shadow-indigo-300 hover:shadow-md transition-all">
+                Start Free
+            </a>
+        </div>
+    </div>
+</nav>
 
-		<section class="section" id="features">
-			<h2>What you get</h2>
-			<p>Simple flows that cut paperwork and keep every rupee and item tracked automatically.</p>
-			<div class="grid">
-				<div class="card">
-					<div class="icon"><i class="fa-solid fa-building"></i></div>
-					<h3>Company (Supplier) Management</h3>
-					<p>Add suppliers, see what you owe or receive, and keep separate ledgers per company.</p>
-				</div>
-				<div class="card">
-					<div class="icon"><i class="fa-solid fa-cubes"></i></div>
-					<h3>Stock & Product Management</h3>
-					<p>Know stock anytime, track buy/sell prices, and auto-update stock on every purchase or sale.</p>
-				</div>
-				<div class="card">
-					<div class="icon"><i class="fa-solid fa-cart-arrow-down"></i></div>
-					<h3>Purchase & Order Tracking</h3>
-					<p>Create purchase orders, see pending vs received, and avoid missing or duplicate orders.</p>
-				</div>
-				<div class="card">
-					<div class="icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-					<h3>Payment & Ledger</h3>
-					<p>Automatic credits/debits, clear history, and zero confusion in company payments.</p>
-				</div>
-				<div class="card">
-					<div class="icon"><i class="fa-solid fa-chart-line"></i></div>
-					<h3>Sales & Profit Tracking</h3>
-					<p>Record daily sales easily, auto-calc profit, and see which products earn more.</p>
-				</div>
-				<div class="card">
-					<div class="icon"><i class="fa-solid fa-chart-pie"></i></div>
-					<h3>Reports & Analysis</h3>
-					<p>Weekly/monthly profit views and custom date filters to understand growth clearly.</p>
-				</div>
-			</div>
-		</section>
+<!-- ── Hero ────────────────────────────────────────────────── -->
+<section class="hero-bg pt-20 pb-16 px-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
-		<section class="section" id="security">
-			<h2>Secure and role-based</h2>
-			<p>Admins control everything. Staff get limited, view-first access. Each dealer’s data is isolated.</p>
-			<div class="card" style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));align-items:center;">
-				<div>
-					<div class="icon"><i class="fa-solid fa-user-shield"></i></div>
-					<h3>Admin controls</h3>
-					<p>Full access for admins: products, companies, purchases, sales, reports, and staff.</p>
-				</div>
-				<div>
-					<div class="icon"><i class="fa-solid fa-user"></i></div>
-					<h3>Staff controls</h3>
-					<p>Limited actions: record sales/purchases; restricted edits and deletions as configured.</p>
-				</div>
-			</div>
-		</section>
+            <!-- Left: copy -->
+            <div>
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-primary text-xs font-semibold rounded-full mb-6">
+                    <i class="fas fa-bolt"></i> Built for Indian Traders & Dealers
+                </span>
+                <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-5">
+                    Manage your goods<br>
+                    <span class="gradient-text">trading business</span><br>
+                    the smart way.
+                </h1>
+                <p class="text-lg text-gray-500 mb-8 leading-relaxed">
+                    Stock, purchases, sales, payments, and profit — all in one place.
+                    No accounting background needed.
+                </p>
+                <div class="flex flex-wrap gap-3 mb-8">
+                    <a href="auth/sign-up.php"
+                       class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-xl shadow-lg shadow-indigo-300 hover:shadow-xl transition-all">
+                        <i class="fas fa-rocket text-sm"></i> Get Started Free
+                    </a>
+                    <a href="auth/sign-in.php"
+                       class="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-sign-in-alt text-sm"></i> Sign In
+                    </a>
+                </div>
+                <p class="text-xs text-gray-400">No credit card required. Access anywhere.</p>
+            </div>
 
-		<section class="section" id="cta">
-			<div class="hero-card" style="text-align:center;">
-				<h2>Start in minutes</h2>
-				<p class="lead">No accounting jargon. Just the essentials to keep goods, money, and profit clear.</p>
-				<div class="cta-row" style="justify-content:center;">
-					<a class="cta primary" href="auth/sign-up.php">Create your account</a>
-					<a class="cta secondary" href="auth/sign-in.php">Sign in</a>
-				</div>
-			</div>
-		</section>
+            <!-- Right: feature pills -->
+            <div class="bg-white rounded-3xl border border-gray-100 shadow-xl p-8">
+                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-5">Perfect for</p>
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <?php
+                    $types = ['Grocery Traders','Wholesale Distributors','Electronics Dealers','Construction Suppliers','FMCG Dealers','Hardware Shops'];
+                    foreach ($types as $t) {
+                        echo '<span class="px-3 py-1.5 bg-indigo-50 text-primary text-xs font-semibold rounded-full">' . $t . '</span>';
+                    }
+                    ?>
+                </div>
+                <div class="space-y-3">
+                    <?php
+                    $perks = [
+                        ['fas fa-check-circle','text-green-500','Auto stock update on every sale & purchase'],
+                        ['fas fa-check-circle','text-green-500','Company-wise payment ledger'],
+                        ['fas fa-check-circle','text-green-500','Role-based staff access'],
+                        ['fas fa-check-circle','text-green-500','Profit tracking per sale'],
+                        ['fas fa-check-circle','text-green-500','WhatsApp bill sharing'],
+                    ];
+                    foreach ($perks as [$icon, $color, $text]) {
+                        echo '<div class="flex items-center gap-3 text-sm text-gray-700">
+                            <i class="' . $icon . ' ' . $color . '"></i>
+                            <span>' . $text . '</span>
+                        </div>';
+                    }
+                    ?>
+                </div>
+            </div>
 
-		<footer>
-			Dealer Pro — Goods Trading Management System
-		</footer>
-	</div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Features ────────────────────────────────────────────── -->
+<section id="features" class="py-20 px-6 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-3">Everything you need</h2>
+            <p class="text-gray-500 max-w-xl mx-auto">Simple flows that cut paperwork and keep every rupee and item tracked automatically.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <?php
+            $features = [
+                ['fas fa-building','bg-indigo-100 text-indigo-600','Company Management','Add suppliers, track what you owe or receive, and keep separate ledgers per company.'],
+                ['fas fa-cubes','bg-emerald-100 text-emerald-600','Stock & Products','Know stock anytime, track buy/sell prices, auto-update on every purchase or sale.'],
+                ['fas fa-cart-arrow-down','bg-amber-100 text-amber-600','Purchase Tracking','Create purchase orders, see pending vs received, avoid missing or duplicate orders.'],
+                ['fas fa-file-invoice-dollar','bg-sky-100 text-sky-600','Payment & Ledger','Automatic credits/debits, clear history, zero confusion in company payments.'],
+                ['fas fa-cash-register','bg-rose-100 text-rose-600','Sales & Billing','Touch-friendly POS, auto-calc profit, WhatsApp bill sharing in one tap.'],
+                ['fas fa-users','bg-purple-100 text-purple-600','Staff Management','Add staff with limited access. Each dealer sees only their own data.'],
+            ];
+            foreach ($features as [$icon, $iconClass, $title, $desc]) {
+                echo '
+                <div class="feature-card bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                    <div class="w-11 h-11 rounded-xl ' . $iconClass . ' flex items-center justify-center mb-4">
+                        <i class="' . $icon . ' text-lg"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-2">' . $title . '</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed">' . $desc . '</p>
+                </div>';
+            }
+            ?>
+        </div>
+    </div>
+</section>
+
+<!-- ── Security ────────────────────────────────────────────── -->
+<section id="security" class="py-20 px-6 bg-white">
+    <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-3">Secure & role-based</h2>
+            <p class="text-gray-500">Admins control everything. Staff get limited access. Each dealer's data is isolated.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            <div class="bg-indigo-50 rounded-2xl p-6 border border-indigo-100">
+                <div class="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4">
+                    <i class="fas fa-user-shield text-lg"></i>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">Admin</h3>
+                <p class="text-sm text-gray-600">Full access: products, companies, purchases, sales, reports, and staff management.</p>
+            </div>
+            <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                <div class="w-11 h-11 rounded-xl bg-gray-200 text-gray-600 flex items-center justify-center mb-4">
+                    <i class="fas fa-user text-lg"></i>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">Staff</h3>
+                <p class="text-sm text-gray-600">Can record sales and purchases. Restricted from editing products, companies, and staff.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── CTA ─────────────────────────────────────────────────── -->
+<section id="cta" class="py-20 px-6 bg-gradient-to-br from-primary to-secondary">
+    <div class="max-w-2xl mx-auto text-center">
+        <h2 class="text-3xl font-bold text-white mb-4">Start in minutes</h2>
+        <p class="text-indigo-200 mb-8 text-lg">No accounting jargon. Just the essentials to keep goods, money, and profit clear.</p>
+        <div class="flex flex-wrap gap-4 justify-center">
+            <a href="auth/sign-up.php"
+               class="px-8 py-3.5 bg-white text-primary font-bold rounded-xl shadow-lg hover:shadow-xl transition-all">
+                Create your account
+            </a>
+            <a href="auth/sign-in.php"
+               class="px-8 py-3.5 bg-white/20 text-white font-semibold rounded-xl border border-white/30 hover:bg-white/30 transition-all">
+                Sign in
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ── Footer ──────────────────────────────────────────────── -->
+<footer class="py-8 px-6 bg-gray-900 text-center">
+    <div class="flex items-center justify-center gap-2 mb-2">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xs">DP</div>
+        <span class="text-white font-semibold">DealerPro</span>
+    </div>
+    <p class="text-gray-500 text-sm">Goods Trading Management System</p>
+</footer>
+
 </body>
 </html>

@@ -1,388 +1,182 @@
-
-<?php 
- session_start();
- if (isset($_SESSION['rgt_logedin_user_id']) && trim($_SESSION['rgt_logedin_user_id']) !== '') {
-	header('Location: ../dealer/dashboard.php');
-	exit;
+<?php
+session_start();
+if (isset($_SESSION['rgt_logedin_user_id']) && trim($_SESSION['rgt_logedin_user_id']) !== '') {
+    header('Location: ../dealer/dashboard.php');
+    exit;
 }
-?><!DOCTYPE html>
+$error = $_SESSION['rgt_error_message'] ?? '';
+unset($_SESSION['rgt_error_message']);
+?>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="shortcut icon" type="image/x-icon" href="../assets/logo.png">
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
-      rel="stylesheet"
-    />
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: "Poppins", sans-serif;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        color: white;
-        overflow: hidden;
-        background: url("../asset/signup.png") no-repeat center center fixed;
-        background-size: cover;
-      }
-
-      .form-container {
-        position: relative;
-        background: rgba(0, 0, 0, 0.353);
-        padding: 30px;
-        width: 500px;
-        border-radius: 20px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        backdrop-filter: blur(5px);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        animation: fadeIn 0.8s ease-in-out;
-        margin-right: 880px;
-      }
-      @media screen and (max-width: 1024px) {
-        .form-container {
-          margin-top: 40px;
-          height: auto;
-          width: 100%;
-          margin-left: 550px;
-        }
-        .header h3 {
-          font-size: 20px;
-        }
-
-        .row {
-          flex-direction: column;
-        }
-
-        .password-wrapper input {
-          width: 600px;
-        }
-
-        button {
-          font-size: 0.9rem;
-        }
-      }
-
-      @media screen and (max-width: 767px) {
-        .form-container {
-          height: auto;
-          justify-content: center;
-          align-items: center;
-          width: 100%;
-          margin-left: 550px;
-          margin-top: -50px;
-        }
-        .header h3 {
-          font-size: 20px;
-        }
-
-        .row {
-          flex-direction: column;
-        }
-
-        .password-wrapper input {
-          width: 300px;
-        }
-
-        button {
-          font-size: 0.9rem;
-        }
-      }
-
-      @media screen and (max-width: 480px) {
-        .form-container {
-          width: 95%;
-        }
-      }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: row;
-        gap: 20px;
-        margin-bottom: 20px;
-      }
-
-      .header img {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        object-fit: cover;
-      }
-
-      .header h3 {
-        font-size: 1.8rem;
-        font-weight: 600;
-        text-align: center;
-        line-height: 1.2;
-      }
-
-      input {
-        width: 100%;
-        padding: 12px;
-        margin: 10px 0;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 5px;
-        font-size: 1rem;
-        color: white;
-        transition: all 0.3s ease;
-      }
-
-      input:focus {
-        background: rgba(255, 255, 255, 0.2);
-        outline: none;
-        border: 1px solid #76abae;
-        box-shadow: 0 0 8px rgba(35, 162, 246, 0.6);
-      }
-
-      .row {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-
-      .row .password-wrapper {
-        flex: 1;
-        position: relative;
-      }
-
-      .row input {
-        flex: 1;
-      }
-
-      .password-wrapper input {
-        padding-right: 40px;
-      }
-
-      #togglePassword1,
-      #togglePassword2 {
-        color: #76abae;
-      }
-
-      .password-wrapper .toggle-password {
-        position: absolute;
-        top: 50%;
-        right: 10px;
-        transform: translateY(-50%);
-        cursor: pointer;
-        font-size: 1.2rem;
-        color: rgba(255, 255, 255, 0.7);
-        transition: color 0.3s ease;
-      }
-
-      .password-wrapper .toggle-password:hover {
-        color: white;
-      }
-
-      button {
-        width: 100%;
-        padding: 12px;
-        margin-top: 15px;
-        background: #76abae;
-        border: none;
-        border-radius: 5px;
-        font-size: 1rem;
-        font-weight: 600;
-        color: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      button:hover {
-        box-shadow: 0 0 15px black, gray;
-        transform: scale(1.03);
-      }
-
-      .signup-link {
-        text-align: center;
-        margin-top: 15px;
-        font-size: 0.9rem;
-        color: rgba(255, 255, 255, 0.7);
-      }
-
-      .signup-link a {
-        color: #76abae;
-        text-decoration: none;
-        font-weight: 500;
-      }
-
-      .signup-link a:hover {
-        text-decoration: underline;
-      }
-
-      input::placeholder {
-        color: #76abae;
-        opacity: 1;
-      }
-
-      .home-button {
-        position: absolute;
-        top: 12px;
-        right: 20px;
-        background: #76abae;
-        border: none;
-        padding: 7px 12px;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-      .home-button i {
-        font-size: 30px;
-        width: 30px;
-        height: 30px;
-        display: inline-block;
-        text-align: center;
-        line-height: 30px;
-        color: white;
-      }
-      .home-button:hover {
-        background: #76abae8f;
-      }  
-      .p{
-        color:  #76abae;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="home-button">
-      <a href="index.php"><i class="fa fa-home"></i></a>
-    </div>
-    <div class="form-container">
-      <div class="header">
-        <h3>
-          Sign-up
-        </h3>
-      </div>
-      <form action="../includes/scripts/signmeup.php" method="post">
-        <p class="p">
-          <?php
-           if(isset( $_SESSION['rgt_error_message'])){
-            echo  $_SESSION['rgt_error_message'];
-          }
-          unset($_SESSION['rgt_error_message']);
-          ?>
-          </p>
-        <input type="text" name="business_name"
-      
-        title="Enter Business Name."
-        placeholder="Business Name" required />
-        <input type="text"  name="owner_name" placeholder="Owner Name" required />
-        <input type="email"  name="user_email" placeholder="Email ID" required />
-        <input type="tel" name="user_phone" placeholder="Mobile Number"
-        pattern="[0-9]{10}" 
-        title="Mobile number must be exactly 10 digits"
-        required />
-
-        <div class="row">
-          <div class="password-wrapper">
-            <input
-              type="password"
-              name="user_password"
-              id="password1"
-              placeholder="Password"
-                pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
-              title="Password must contain at least one uppercase, lowercase, digit, special character, and be at least 8 characters."
-              required
-            />
-            <i class="fas fa-eye toggle-password" id="togglePassword1"></i>
-          </div>
-
-          <div class="password-wrapper">
-            <input
-              type="password"
-              id="password2"
-              name="user_confirm_password"
-              placeholder="Confirm Password"
-              required
-            />
-            <i class="fas fa-eye toggle-password" id="togglePassword2"></i>
-          </div>
-        </div>
-
-        <button type="submit">REGISTER</button>
-
-        <p class="signup-link">
-          Already have an account ?<a href="sign-in.php"> Login</a>
-        </p>
-      </form>
-    </div>
-
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account — DealerPro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      const passwordInput1 = document.getElementById("password1");
-      const passwordInput2 = document.getElementById("password2");
-      const togglePassword1 = document.getElementById("togglePassword1");
-      const togglePassword2 = document.getElementById("togglePassword2");
-
-      togglePassword1.addEventListener("click", () => {
-        const type = passwordInput1.type === "password" ? "text" : "password";
-        passwordInput1.type = type;
-
-        togglePassword1.classList.toggle("fa-eye-slash");
-      });
-
-      togglePassword2.addEventListener("click", () => {
-        const type = passwordInput2.type === "password" ? "text" : "password";
-        passwordInput2.type = type;
-
-        togglePassword2.classList.toggle("fa-eye-slash");
-      });
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#4F46E5', secondary: '#6366F1' },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
     </script>
-    <script>
-  // Disable Right-Click
-  document.addEventListener("contextmenu", function (event) {
-    event.preventDefault();
-  });
+</head>
+<body class="bg-gray-50 font-sans min-h-screen flex items-center justify-center p-4">
 
-  // Disable Keyboard Shortcuts for Developer Tools
-  document.addEventListener("keydown", function (event) {
-    if (
-      event.ctrlKey && event.shiftKey && (event.key === "I" || event.key === "J" || event.key === "C" || event.key === "M") || // Ctrl + Shift + I / J / C
-      event.ctrlKey && event.key === "U" || // Ctrl + U (View Source)
-      event.key === "F12" // F12 (DevTools)
-    ) {
-      event.preventDefault();
+<div class="w-full max-w-lg">
+
+    <!-- Logo -->
+    <div class="text-center mb-8">
+        <a href="../index.php" class="inline-flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-base shadow-lg shadow-indigo-300">DP</div>
+            <span class="text-2xl font-bold text-gray-900">DealerPro</span>
+        </a>
+        <p class="text-gray-500 text-sm mt-2">Create your free account</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
+
+        <!-- Error message -->
+        <?php if ($error): ?>
+        <div class="mb-5 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+            <i class="fas fa-exclamation-circle mt-0.5 flex-shrink-0"></i>
+            <span><?= htmlspecialchars($error) ?></span>
+        </div>
+        <?php endif; ?>
+
+        <form action="../includes/scripts/signmeup.php" method="POST" class="space-y-4" id="signupForm">
+
+            <!-- Business Name -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Business Name *</label>
+                <div class="relative">
+                    <i class="fas fa-store absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                    <input type="text" name="business_name" required placeholder="Your shop / business name"
+                           class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                </div>
+            </div>
+
+            <!-- Owner Name -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Owner Name *</label>
+                <div class="relative">
+                    <i class="fas fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                    <input type="text" name="owner_name" required placeholder="Full name"
+                           class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email Address *</label>
+                <div class="relative">
+                    <i class="fas fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                    <input type="email" name="user_email" required placeholder="you@example.com"
+                           class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                </div>
+            </div>
+
+            <!-- Mobile -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Mobile Number *</label>
+                <div class="relative">
+                    <i class="fas fa-phone absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                    <input type="tel" name="user_phone" required placeholder="10-digit mobile number"
+                           pattern="[0-9]{10}" title="Mobile number must be exactly 10 digits"
+                           class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                </div>
+            </div>
+
+            <!-- Passwords -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Password *</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                        <input type="password" id="pwd1" name="user_password" required
+                               placeholder="Min 8 characters"
+                               pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                               title="Must contain uppercase, lowercase, digit, special character, min 8 chars"
+                               class="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        <button type="button" onclick="togglePwd('pwd1','eye1')"
+                                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                            <i id="eye1" class="fas fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Confirm Password *</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                        <input type="password" id="pwd2" name="user_confirm_password" required
+                               placeholder="Repeat password"
+                               class="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        <button type="button" onclick="togglePwd('pwd2','eye2')"
+                                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                            <i id="eye2" class="fas fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password hint -->
+            <p class="text-xs text-gray-400">
+                <i class="fas fa-info-circle mr-1"></i>
+                Password must have uppercase, lowercase, number, and special character (@$!%*?&), min 8 chars.
+            </p>
+
+            <!-- Submit -->
+            <button type="submit"
+                    class="w-full py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-xl shadow-lg shadow-indigo-300 hover:shadow-xl transition-all text-sm mt-2">
+                Create Account
+            </button>
+
+        </form>
+
+        <p class="text-center text-sm text-gray-500 mt-6">
+            Already have an account?
+            <a href="sign-in.php" class="text-primary font-semibold hover:underline">Sign in</a>
+        </p>
+
+    </div>
+
+    <!-- Back to home -->
+    <p class="text-center mt-6">
+        <a href="../index.php" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            <i class="fas fa-arrow-left mr-1"></i> Back to home
+        </a>
+    </p>
+
+</div>
+
+<script>
+    function togglePwd(inputId, iconId) {
+        var input = document.getElementById(inputId);
+        var icon  = document.getElementById(iconId);
+        var isText = input.type === 'text';
+        input.type = isText ? 'password' : 'text';
+        icon.className = isText ? 'fas fa-eye text-sm' : 'fas fa-eye-slash text-sm';
     }
-  });
 
-  // Prevent Opening DevTools via Mouse Clicks
-  document.addEventListener("mousedown", function (event) {
-    if (event.button === 2 || event.button === 1) { // Right-click or Middle-click
-      event.preventDefault();
-    }
-  });
-
-  // Prevent DevTools Detection
-  (function() {
-    setInterval(function() {
-      if (window.outerHeight - window.innerHeight > 200 || window.outerWidth - window.innerWidth > 200) {
-        document.body.innerHTML = "DevTools Detected. Please close it!";
-      }
-    }, 1000);
-  })();
+    // Client-side password match check
+    document.getElementById('signupForm').addEventListener('submit', function (e) {
+        var p1 = document.getElementById('pwd1').value;
+        var p2 = document.getElementById('pwd2').value;
+        if (p1 !== p2) {
+            e.preventDefault();
+            alert('Passwords do not match. Please try again.');
+        }
+    });
 </script>
-  </body>
+
+</body>
 </html>

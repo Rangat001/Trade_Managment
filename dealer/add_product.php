@@ -14,6 +14,7 @@ if (!$is_admin) {
         $company_id = $_POST['company_id'];
         $product_name = $_POST['product_name'];
         $hsn_code = $_POST['hsn_code'];
+        $catogery = $_POST['category']; 
         $barcode_no = $_POST['barcode_no'];
         $gst = $_POST['gst'];
         $purchase_price = $_POST['purchase_price'];
@@ -29,7 +30,7 @@ if (!$is_admin) {
         // Handle Form Submission
         
         if($_SERVER["REQUEST_METHOD"] == "POST"){
-            $sql = "INSERT INTO `products`(`dealer_id`, `company_id`, `product_name`, `HSN`,`GST`,`Barcode`,`base_price`, `selling_price`, `assurance`, `validity`, `current_stock`) VALUES ('$dealer_id','$company_id','$product_name','$hsn_code','$gst','$barcode_no', '$purchase_price','$selling_price','$assurance','$validity','$initial_quantity')";
+            $sql = "INSERT INTO `products`(`dealer_id`, `company_id`, `product_name`,`category`,  `HSN`,`GST`,`Barcode`,`base_price`, `selling_price`, `assurance`, `validity`, `current_stock`) VALUES ('$dealer_id','$company_id','$product_name','$catogery','$hsn_code','$gst','$barcode_no', '$purchase_price','$selling_price','$assurance','$validity','$initial_quantity')";
             if ($conn->query($sql) === TRUE) {
                 $product_id = $conn->insert_id; // Get the ID of the newly inserted product
                 // Insert product price history when procut added for the first time and create new row for same when price updates
