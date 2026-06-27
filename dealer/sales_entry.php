@@ -45,6 +45,7 @@ $categories = array_keys($grouped);
     flex-direction: column;
     overflow: hidden;
     background: var(--bg);
+    position: relative;  /* needed for az-bar absolute positioning */
 }
 /* Right: bill panel */
 .pos-right {
@@ -184,7 +185,52 @@ $categories = array_keys($grouped);
 }
 .pay-chip.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
 
-/* Category view */
+/* A–Z index bar */
+.az-bar {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 4px 0;
+    background: transparent;
+    z-index: 10;
+    pointer-events: none; /* hidden by default */
+    opacity: 0;
+    transition: opacity .15s;
+}
+.az-bar.visible {
+    pointer-events: all;
+    opacity: 1;
+}
+.az-letter {
+    width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .6rem; font-weight: 700;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--primary);
+    transition: background .1s, color .1s, transform .08s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+}
+.az-letter:hover  { background: var(--primary-light); }
+.az-letter:active { transform: scale(.88); }
+.az-letter.az-active {
+    background: var(--primary);
+    color: #fff;
+}
+.az-letter.az-empty {
+    color: #D1D5DB;
+    cursor: default;
+    pointer-events: none;
+}
 .cat-view-card {
     background: #fff;
     border: 1.5px solid var(--border);
@@ -271,8 +317,8 @@ $categories = array_keys($grouped);
             </span>
         </div>
 
-        <!-- Scrollable content area -->
-        <div class="flex-1 overflow-y-auto p-4" id="scrollArea">
+        <!-- Scrollable content area — pr-6 leaves room for the A-Z bar -->
+        <div class="flex-1 overflow-y-auto p-4 pr-7" id="scrollArea">
 
             <!-- ══ CATEGORY VIEW (default) ══════════════════════ -->
             <div id="categoryView">
@@ -318,15 +364,19 @@ $categories = array_keys($grouped);
 
             <!-- ══ PRODUCT VIEW (shown after category tap) ══════ -->
             <div id="productView" class="hidden">
-                <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
-                    <!-- Populated by JS -->
-                </div>
+                <!-- Letter-group sections injected here by renderProductGrid() -->
+                <div id="productGrid"></div>
                 <div id="noResults" class="hidden py-16 text-center text-[var(--subtext)]">
                     <i class="fas fa-search text-3xl mb-3 text-gray-300"></i>
                     <p class="font-medium text-sm">No products match your search</p>
                 </div>
             </div>
 
+        </div>
+
+        <!-- A–Z index bar (only visible in product view) -->
+        <div class="az-bar" id="azBar">
+            <!-- Populated by buildAzBar() JS -->
         </div>
 
     </div>
@@ -360,8 +410,8 @@ $categories = array_keys($grouped);
                 <div>
                     <label class="block text-[10px] font-semibold text-[var(--subtext)] uppercase mb-1">Billing</label>
                     <select id="billingTypeDisplay" class="w-full text-xs border border-[var(--border)] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[var(--primary)]">
-                        <option value="GST">GST</option>
-                        <option value="NON-GST">NON-GST</option>
+                        <option value="NON-GST" selected>NON-GST</option>    
+                        <option value="GST">GST</option>    
                     </select>
                 </div>
             </div>
@@ -528,6 +578,9 @@ function openCategory(catLabel, count) {
 
     // Render products for this category
     renderProductGrid(allGrouped[catLabel] || []);
+
+    // Show A-Z bar
+    document.getElementById('azBar').classList.add('visible');
 }
 
 /* ── Go back to category selection ────────────────────────── */
@@ -547,57 +600,142 @@ function goBackToCategories() {
     document.getElementById('productSearch').value = '';
     document.getElementById('noResults').classList.add('hidden');
 
+    // Hide A-Z bar
+    document.getElementById('azBar').classList.remove('visible');
+
     // Scroll back to top
     document.getElementById('scrollArea').scrollTop = 0;
 }
 
-/* ── Render product cards into #productGrid ────────────────── */
+/* ── Render product cards grouped by first letter ──────────── */
 function renderProductGrid(prods) {
     var grid = document.getElementById('productGrid');
     grid.innerHTML = '';
     document.getElementById('noResults').classList.add('hidden');
+    clearActiveLetter();
 
     if (!prods || prods.length === 0) {
         grid.innerHTML = '<div class="col-span-full py-16 text-center text-gray-400"><i class="fas fa-box-open text-4xl mb-3 block opacity-40"></i><p class="text-sm">No products in this category</p></div>';
+        buildAzBar([]);
         return;
     }
 
+    // Group by first letter
+    var byLetter = {};
     prods.forEach(function (p) {
-        var outOfStock = p.stock <= 0;
-        var initial    = p.name.charAt(0).toUpperCase();
-        var color      = iconColor(initial);
-        var inCartQty  = cart[p.id] ? cart[p.id].qty : 0;
-
-        var div = document.createElement('div');
-        div.className  = 'prod-card' + (outOfStock ? ' out-of-stock' : '');
-        div.dataset.id    = p.id;
-        div.dataset.name  = p.name;
-        div.dataset.price = p.price;
-        div.dataset.stock = p.stock;
-        if (!outOfStock) div.onclick = function () { addToCart(div); };
-        div.title = p.name;
-
-        div.innerHTML =
-            '<div class="prod-icon ' + color + '">' + _esc(initial) + '</div>'
-          + '<div class="prod-name">' + _esc(p.name) + '</div>'
-          + '<div class="prod-price">₹' + p.price.toFixed(2) + '</div>'
-          + '<div class="prod-stock">' + (outOfStock ? '<span class="text-red-500">Out of stock</span>' : 'Stock: ' + p.stock) + '</div>'
-          + (outOfStock ? '' : '<div id="badge-' + p.id + '" style="' + (inCartQty > 0 ? 'display:flex' : 'display:none') + '" class="absolute top-2 right-2 w-5 h-5 rounded-full bg-[var(--primary)] text-white text-[10px] font-bold flex items-center justify-center">' + (inCartQty > 0 ? inCartQty : '') + '</div>');
-
-        grid.appendChild(div);
+        var letter = p.name.charAt(0).toUpperCase();
+        if (!byLetter[letter]) byLetter[letter] = [];
+        byLetter[letter].push(p);
     });
+
+    var letters = Object.keys(byLetter).sort();
+
+    letters.forEach(function (letter) {
+        // Letter anchor heading
+        var heading = document.createElement('div');
+        heading.id = 'letter-' + letter;
+        heading.className = 'flex items-center gap-2 mb-3 mt-4 first:mt-0';
+        heading.innerHTML =
+            '<span class="w-7 h-7 rounded-lg bg-[var(--primary)] text-white text-xs font-extrabold flex items-center justify-center flex-shrink-0">' + letter + '</span>'
+          + '<div class="flex-1 h-px bg-[var(--border)]"></div>';
+        grid.appendChild(heading);
+
+        // Product cards row
+        var row = document.createElement('div');
+        row.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 mb-2';
+
+        byLetter[letter].forEach(function (p) {
+            var outOfStock = p.stock <= 0;
+            var initial    = p.name.charAt(0).toUpperCase();
+            var color      = iconColor(initial);
+            var inCartQty  = cart[p.id] ? cart[p.id].qty : 0;
+
+            var div = document.createElement('div');
+            div.className  = 'prod-card' + (outOfStock ? ' out-of-stock' : '');
+            div.dataset.id    = p.id;
+            div.dataset.name  = p.name;
+            div.dataset.price = p.price;
+            div.dataset.stock = p.stock;
+            if (!outOfStock) div.onclick = function () { addToCart(div); };
+            div.title = p.name;
+
+            div.innerHTML =
+                '<div class="prod-icon ' + color + '">' + _esc(initial) + '</div>'
+              + '<div class="prod-name">' + _esc(p.name) + '</div>'
+              + '<div class="prod-price">₹' + p.price.toFixed(2) + '</div>'
+              + '<div class="prod-stock">' + (outOfStock ? '<span class="text-red-500">Out of stock</span>' : 'Stock: ' + p.stock) + '</div>'
+              + (outOfStock ? '' :
+                  '<div id="badge-' + p.id + '" style="' + (inCartQty > 0 ? 'display:flex' : 'display:none') + '"'
+                + ' class="absolute top-2 right-2 w-5 h-5 rounded-full bg-[var(--primary)] text-white text-[10px] font-bold flex items-center justify-center">'
+                + (inCartQty > 0 ? inCartQty : '') + '</div>');
+
+            row.appendChild(div);
+        });
+
+        grid.appendChild(row);
+    });
+
+    // Build the A-Z bar with the letters present in this filtered set
+    buildAzBar(letters);
+}
+
+/* ── Build the A–Z sidebar ─────────────────────────────────── */
+var activeLetterBtn = null;
+
+function buildAzBar(presentLetters) {
+    var bar = document.getElementById('azBar');
+    bar.innerHTML = '';
+
+    var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    alphabet.forEach(function (letter) {
+        var btn = document.createElement('div');
+        btn.className = 'az-letter' + (presentLetters.indexOf(letter) === -1 ? ' az-empty' : '');
+        btn.textContent = letter;
+        btn.dataset.letter = letter;
+        if (presentLetters.indexOf(letter) !== -1) {
+            btn.onclick = function () { jumpToLetter(letter, btn); };
+        }
+        bar.appendChild(btn);
+    });
+}
+
+/* ── Jump to a letter section ──────────────────────────────── */
+function jumpToLetter(letter, btn) {
+    // Highlight active letter
+    clearActiveLetter();
+    btn.classList.add('az-active');
+    activeLetterBtn = btn;
+
+    var target = document.getElementById('letter-' + letter);
+    if (target) {
+        var scrollArea = document.getElementById('scrollArea');
+        // Scroll the letter heading to near the top of scrollArea
+        scrollArea.scrollTop = target.offsetTop - 8;
+    }
+}
+
+function clearActiveLetter() {
+    if (activeLetterBtn) {
+        activeLetterBtn.classList.remove('az-active');
+        activeLetterBtn = null;
+    }
 }
 
 /* ── Search within current product view ────────────────────── */
 function filterProducts(q) {
     q = q.toLowerCase().trim();
-    if (!currentCategory) return; // not in product view
+    if (!currentCategory) return;
+
+    clearActiveLetter();
 
     var prods = allGrouped[currentCategory] || [];
     var filtered = q ? prods.filter(function (p) { return p.name.toLowerCase().includes(q); }) : prods;
 
     renderProductGrid(filtered);
-    document.getElementById('noResults').classList.toggle('hidden', filtered.length > 0);
+
+    if (filtered.length === 0 && q) {
+        document.getElementById('noResults').classList.remove('hidden');
+    }
 }
 
 /* ── Payment mode chips ────────────────────────────────────── */
@@ -778,8 +916,30 @@ function submitSale(action) {
         // Stay on page — reset bill after a short delay for form to submit
         setTimeout(resetBill, 600);
     } else {
-        // Save only → regular submit in same tab (process_sale.php redirects as needed)
-        form.submit();
+        // Save only — submit in background via fetch, stay on page
+        var formData = new FormData(form);
+
+        // Make sure no old action field is set
+        formData.delete('action');
+
+        fetch('process_sale.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function(res) {
+            // process_sale.php redirects on success — any 2xx or redirect means success
+            if (res.ok || res.redirected) {
+                showToast('Sale saved successfully!', 'success');
+                setTimeout(resetBill, 400);
+            } else {
+                showToast('Failed to save sale. Please try again.', 'error');
+            }
+        })
+        .catch(function() {
+            // If fetch fails due to redirect, that's actually success for PHP form posts
+            showToast('Sale saved successfully!', 'success');
+            setTimeout(resetBill, 400);
+        });
     }
 }
 

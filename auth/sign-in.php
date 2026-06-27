@@ -46,7 +46,58 @@ unset($_SESSION['rgt_error_message'], $_SESSION['rgt_success_message']);
     <!-- Card -->
     <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
 
+        <?php if (!empty($_SESSION['lockout_until']) && $_SESSION['lockout_until'] > time()): ?>
+
+<div id="lockout-banner" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-center">
+    🔒 Too many failed attempts. Try again in 
+    <span id="countdown" class="font-bold">--:--</span>  <!-- ✅ span must be here -->
+</div>
+
+<script>
+    const unlockAt = <?= (int)$_SESSION['lockout_until'] ?> * 1000;
+
+    // ✅ Debug: check what value PHP is printing
+    console.log('unlockAt:', unlockAt);
+    console.log('now:', Date.now());
+    console.log('remaining ms:', unlockAt - Date.now());
+
+    const countdownEl = document.getElementById('countdown');
+
+    // ✅ Check span is found
+    if (!countdownEl) {
+        console.error('countdown span not found!');
+    }
+
+    const submitBtn     = document.getElementById('submit-btn');
+    const usernameInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    if (submitBtn)     { submitBtn.disabled = true;     submitBtn.classList.add('opacity-50', 'cursor-not-allowed'); }
+    if (usernameInput) { usernameInput.disabled = true; }
+    if (passwordInput) { passwordInput.disabled = true; }
+
+    function tick() {
+        const remaining = Math.max(0, unlockAt - Date.now());
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+
+        // ✅ Direct assignment — no chaining
+        countdownEl.textContent = mins + 'm ' + String(secs).padStart(2, '0') + 's';
+
+        if (remaining <= 0) {
+            clearInterval(timer);
+            location.reload();
+        }
+    }
+
+    tick(); // ✅ Run once immediately so it shows right away
+    const timer = setInterval(tick, 1000);
+</script>
+
+<?php endif; ?>
+
         <!-- Flash messages -->
+        
         <?php if ($error): ?>
         <div class="mb-5 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
             <i class="fas fa-exclamation-circle mt-0.5 flex-shrink-0"></i>
@@ -92,7 +143,7 @@ unset($_SESSION['rgt_error_message'], $_SESSION['rgt_success_message']);
             </div>
 
             <!-- Submit -->
-            <button type="submit"
+            <button type="submit" id = "submit-btn"
                     class="w-full py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-xl shadow-lg shadow-indigo-300 hover:shadow-xl transition-all text-sm">
                 Sign In
             </button>

@@ -2,6 +2,10 @@
 require_once 'includes/auth_check.php';
 $pageTitle  = 'Companies';
 $activePage = 'companies';
+
+$error   = $_SESSION['rgt_error_message']   ?? '';
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -123,6 +127,14 @@ $activePage = 'companies';
             </button>
         </div>
 
+       
+        <?php if ($error): ?>
+        <div class="mb-5 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+            <i class="fas fa-exclamation-circle mt-0.5 flex-shrink-0"></i>
+            <span><?= htmlspecialchars($error) ?></span>
+        </div>
+        <?php endif; ?>
+
         <form action="add_company.php" method="POST" class="p-6">
             <div class="space-y-5">
                 <div>
@@ -174,6 +186,13 @@ $activePage = 'companies';
             </button>
         </div>
 
+        <?php if ($error): ?>
+        <div class="mb-5 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+            <i class="fas fa-exclamation-circle mt-0.5 flex-shrink-0"></i>
+            <span><?= htmlspecialchars($error) ?></span>
+        </div>
+        <?php endif; ?>
+
         <form action="edit_company.php" method="POST" class="p-6">
             <input type="hidden" name="comp_id" value="">
 
@@ -186,13 +205,13 @@ $activePage = 'companies';
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Owner Contact</label>
-                    <input type="text" name="owner_contact" value="1234567890" required
+                    <input type="text" name="owner_contact" value="1234567890" pattern="[0-9]{10}" required
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" name="edit_email" value="" required
+                    <input type="email" name="edit_email" value="" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" required
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                 </div>
             </div>

@@ -5,7 +5,7 @@
  */
 
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    require __DIR__ . '/../../includes/scripts/config.php';
 }
 
 require_once __DIR__ . '/../../includes/scripts/connection.php';

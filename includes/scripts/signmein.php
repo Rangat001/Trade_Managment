@@ -1,17 +1,29 @@
 <?php
 session_start();
+require 'login_guard.php';
 // include 'includes/scripts/config.php';
 
+blockIfLockedOut();
 // Database connection
 require 'connection.php';
+
+// Pull lockout message if redirected back
+if (!empty($_SESSION['lockout_message'])) {
+    $_SESSION['rgt_error_message'] = $_SESSION['lockout_message'];
+    unset($_SESSION['lockout_message']);
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+    blockIfLockedOut();
     $login_user_name = $_POST["email"];
     $loginPassword = $_POST["rgt_login_password"];
 
     // Validate input (you might want to add more validation checks)
     if (empty($login_user_name) || empty($loginPassword)) {
         $_SESSION['rgt_error_message'] = "username and password are required.";
-        header("Location: sign-in.php");
+        header("Location: ../../auth/sign-in.php");
+        exit();
     }
 
      // Retrieve hashed password from the database based on the provided email
@@ -29,6 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
      
       // Verify the provided password against the stored hashed password
       if (password_verify($loginPassword, $hashedPasswordFromDB)) {
+        resetAttempts();
         // Password is correct, set session variables or perform other actions as needed
         $isVerified = 1;
         $sql = "UPDATE `users` SET `is_verified`='$isVerified' WHERE `id` = $userId";
@@ -51,7 +64,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           }   
       }else{
           // Password is incorrect
-          $_SESSION['rgt_error_message'] = "Incorrect password. ";
+          recordFailedAttempt();
+          $attemptsLeft = MAX_ATTEMPTS - $_SESSION['login_attempts'];
+
+            if ($attemptsLeft <= 0) {
+                $_SESSION['rgt_error_message'] = "Account locked for 2 minutes due to too many attempts.";
+            } else {
+                $_SESSION['rgt_error_message'] = "Invalid credentials. {$attemptsLeft} attempt(s) remaining.";
+            }
           header("Location: ../../auth/sign-in.php");
           echo "eror";
         }
@@ -59,6 +79,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }else{
       // username not found in the database
       $_SESSION['rgt_error_message'] = "username is  not found OR Not Authorized.";
+      recordFailedAttempt(); // ✅ count wrong username same as wrong password
+      $attemptsLeft = MAX_ATTEMPTS - ($_SESSION['login_attempts'] ?? 0);
       header("Location: ../../auth/sign-in.php");
   }
   $conn->close();

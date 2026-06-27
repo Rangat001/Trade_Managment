@@ -41,6 +41,10 @@ $itemStmt->execute();
 $items = $itemStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $itemStmt->close();
 
+//is GST bill
+
+$isGST = ($sale["billing_type"] == "GST");
+
 // Calculations
 $grandTotal   = array_sum(array_column($items, 'total'));
 $discount     = $sale['bill_amount'] - $sale['total_amount'];
@@ -49,8 +53,7 @@ $invoiceNo    = 'BL' . str_pad($sale_id, 6, '0', STR_PAD_LEFT);
 $saleDate     = date('d-m-Y', strtotime($sale['sale_date']));
 $printTime    = date('d-m-Y H:i:s');
 
-// GST breakdown (assuming total_amount is GST inclusive)
-// Weighted average GST % across items
+// Apply discount proportionally
 $totalGSTAmount = 0;
 $taxableAmount  = 0;
 
@@ -61,7 +64,8 @@ foreach ($items as $item) {
     $taxableAmount  += $itemTotal; // before GST addition
 }
 
-// Apply discount proportionally
+// GST breakdown (assuming total_amount is GST inclusive)
+// Weighted average GST % across items
 $discountRatio  = $totalAmount / $grandTotal;
 $taxableAmount  = $taxableAmount * $discountRatio;
 $totalGSTAmount = $totalGSTAmount * $discountRatio;
@@ -180,7 +184,12 @@ $totalGSTAmount = $totalGSTAmount * $discountRatio;
 
     <div class="item-qty-row">
         <span>HSN/SAC : <?= $item['HSN'] ?></span>
-        <span>GST : <?= $item['GST'] ?>%</span>
+        <?php 
+            if ($isGST) {
+                echo "<span>GST : {$item['GST']}%</span>";
+            }
+        ?>
+        
     </div>
 </div>
 <div class="divider-dashed"></div>
@@ -201,7 +210,12 @@ $totalGSTAmount = $totalGSTAmount * $discountRatio;
 </div>
 <div class="summary-row">
     <span>GST</span>
-    <span>&#8377;<?= number_format($totalGSTAmount, 2) ?></span>
+    <?php 
+            if ($isGST) {
+                echo "<span>&#8377;<?= number_format($totalGSTAmount, 2) ?></span>";
+            }
+        ?>
+    
 </div>
 
 <div class="divider-solid"></div>
