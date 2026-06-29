@@ -191,7 +191,7 @@ $categories = array_keys($grouped);
     right: 0;
     top: 0;
     bottom: 0;
-    width: 22px;
+    width: 32px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -209,10 +209,10 @@ $categories = array_keys($grouped);
     opacity: 1;
 }
 .az-letter {
-    width: 18px; height: 18px;
+    width: 26px; height: 20px;
     display: flex; align-items: center; justify-content: center;
-    font-size: .6rem; font-weight: 700;
-    border-radius: 5px;
+    font-size: .68rem; font-weight: 700;
+    border-radius: 6px;
     cursor: pointer;
     color: var(--primary);
     transition: background .1s, color .1s, transform .08s;
@@ -318,7 +318,10 @@ $categories = array_keys($grouped);
         </div>
 
         <!-- Scrollable content area — pr-6 leaves room for the A-Z bar -->
-        <div class="flex-1 overflow-y-auto p-4 pr-7" id="scrollArea">
+        <!-- <div class="flex-1 overflow-y-auto p-4 pr-7" id="scrollArea"> -->
+        <!-- Scrollable content area — pr-9 leaves room for the A-Z bar -->
+            <div class="flex-1 overflow-y-auto p-4 pr-9" id="scrollArea" 
+     style="-ms-overflow-style:none; scrollbar-width:none;">
 
             <!-- ══ CATEGORY VIEW (default) ══════════════════════ -->
             <div id="categoryView">
