@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
   if (typeof jQuery !== 'undefined' && typeof jQuery.fn.DataTable !== 'undefined') {
     jQuery('.datanew').DataTable({
-      pageLength: 25,
+      pageLength: 10,
       language: {
         search:      'Search:',
         lengthMenu:  'Show _MENU_ entries',

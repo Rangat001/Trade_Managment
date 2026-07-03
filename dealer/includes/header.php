@@ -9,10 +9,15 @@
  * Usage: require_once 'includes/header.php'; inside <head>...</head>
  */
 $showEditProfile = $showEditProfile ?? false;
-?>
+$faviconVersion = @filemtime(__DIR__ . '/../../asset/favicon.ico') ?: time();
+$favicon192Version = @filemtime(__DIR__ . '/../../asset/dp_favicon_192.png') ?: time();
+?>      
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle ?? 'Dealer Panel') ?> - Dealer Panel</title>
+
+    <link rel="icon" href="../asset/favicon.ico?v=<?= $faviconVersion ?>" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="192x192" href="../asset/dp_favicon_192.png?v=<?= $favicon192Version ?>">
 
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
