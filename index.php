@@ -12,6 +12,10 @@ if (isset($_SESSION['rgt_logedin_user_id']) && trim($_SESSION['rgt_logedin_user_
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DealerPro — Goods Trading Management</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="icon" href="asset/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="192x192" href="asset/dp_favicon_192.png">
+
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
