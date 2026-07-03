@@ -37,14 +37,15 @@ $activePage = 'products';
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Product Name</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Category</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Company Name</th>
-                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">HSN Code</th>
-                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">GST (%)</th>
-                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Barcode</th>
+                                
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Assurance</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Validity</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Base Price</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">selling Price</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">current stock</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">HSN Code</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">GST (%)</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Barcode</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -73,17 +74,18 @@ $activePage = 'products';
                                                 <?php endif; ?>
                                             </td>
                                             <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['company_name']; ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['HSN'] ; ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['GST'] ; ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['Barcode'] ; ?></td>
+                                            
                                             <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['assurance'] ; ?></td>
                                             <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['VALIDITY'] ; ?></td>
                                             <td class="py-4 px-6 text-sm text-gray-900">₹<?php echo number_format($row['base_price'], 2); ?></td>
                                             <td class="py-4 px-6 text-sm text-gray-900">₹<?php echo number_format($row['selling_price'], 2); ?></td>
                                             <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['current_stock']; ?></td>
+                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['HSN'] ; ?></td>
+                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['GST'] ; ?></td>
+                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['Barcode'] ; ?></td>
                                             <td class="py-4 px-6">
                                                 <div class="flex items-center gap-2">
-                                                    <button onclick="openEditProductModal(<?php echo $row['id']; ?>, '<?php echo htmlspecialchars($row['product_name'], ENT_QUOTES); ?>', <?php echo $row['base_price']; ?>, <?php echo $row['selling_price']; ?>, <?php echo $row['current_stock']; ?>, '<?php echo htmlspecialchars($row['category'] ?? '', ENT_QUOTES); ?>')" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                                                    <button onclick="openEditProductModal(<?php echo $row['id']; ?>, '<?php echo htmlspecialchars($row['product_name'], ENT_QUOTES); ?>', <?php echo $row['base_price']; ?>, <?php echo $row['selling_price']; ?>, <?php echo $row['current_stock']; ?>, '<?php echo htmlspecialchars($row['category'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($row['HSN'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($row['Barcode'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($row['GST'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($row['assurance'] ?? 'None', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($row['VALIDITY'] ?? '', ENT_QUOTES); ?>')" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                                                         <i class="fas fa-edit"></i> Edit
                                                     </button>
                                                     <button onclick="window.location.href='price_history.php?id=<?php echo $row['id']; ?>'" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-lg transition-colors">
@@ -243,6 +245,54 @@ $activePage = 'products';
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                 </div>
 
+                //hsn
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">HSN Code</label>
+                    <input  required type="text" name="hsn" id="edit_hsn" value=""
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                </div>
+
+                // barcode
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Barcode</label>
+                    <input  required type="number" name="barcode" id="edit_barcode" value=""
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                </div>
+
+                //gst
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">gst</label>
+                    <input  required type="number" name="gst" id="edit_gst" value=""
+                           placeholder="e.g. 18"
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                </div>
+
+                //assurance
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ASSURANCE</label>
+                    <select name="assurance" required id="edit_assurance"
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        <option value="">Select Type</option>
+                        <option value="None" selected>None</option>
+                        <option value="Guarantee">Guarantee</option>
+                        <option value="Warranty">Warranty</option>
+                    </select>
+
+                </div>
+
+                // validity
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Validity(Months)</label>
+                    <input  required type="number" name="validity" id="edit_validity" value=""
+                           placeholder="e.g. 6"
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                </div>
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Purchase Price (₹) *</label>
                     <input type="number" name="purchase_price" id="edit_purchase_price" value="" step="0.01" min="0" required
@@ -288,13 +338,18 @@ $activePage = 'products';
         document.getElementById('addProductModal').classList.add('hidden');
     }
 
-    function openEditProductModal(productId, productName, purchasePrice, sellingPrice, currentStock, category) {
+    function openEditProductModal(productId, productName, purchasePrice, sellingPrice, currentStock, category, hsn, barcode, gst, assurance, validity) {
         document.getElementById('edit_product_id').value = productId;
         document.getElementById('edit_product_name').value = productName;
         document.getElementById('edit_purchase_price').value = purchasePrice;
         document.getElementById('edit_selling_price').value = sellingPrice;
         document.getElementById('edit_current_stock').value = currentStock;
         document.getElementById('edit_category').value = category || '';
+        document.getElementById('edit_hsn').value = hsn || '';
+        document.getElementById('edit_barcode').value = barcode || '';
+        document.getElementById('edit_gst').value = gst || '';
+        document.getElementById('edit_assurance').value = assurance || 'None';
+        document.getElementById('edit_validity').value = validity || '';
         document.getElementById('editProductModal').classList.remove('hidden');
     }
 
