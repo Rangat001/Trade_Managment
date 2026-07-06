@@ -16,7 +16,7 @@ $showEditProfile = true;
     <main class="p-6 md:p-8">
 
         <!-- ── Stat Cards ──────────────────────────────────────── -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div id="dashboardStats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
             <!-- Total Expense -->
             <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] p-6 hover:shadow-md transition-shadow">
@@ -25,12 +25,9 @@ $showEditProfile = true;
                         <img src="../asset/img/icons/expense.png" alt="Total Expense" class="w-12 h-12 object-contain">
                     </div>
                     <div>
-                        <?php
-                        $sale_stmt = $conn->prepare("SELECT SUM(amount) AS expense FROM company_transactions WHERE dealer_id = ? AND type = 'DEBIT'");
-                        $sale_stmt->bind_param("i", $dealer_id); $sale_stmt->execute();
-                        $sale_data = $sale_stmt->get_result()->fetch_assoc();
-                        ?>
-                        <h3 class="text-2xl font-bold text-[var(--text)]">₹ <?php echo number_format($sale_data['expense'] ?? 0); ?></h3>
+                        <h3 id="dashExpense" class="text-2xl font-bold text-[var(--text)]">
+                            <div class="h-7 w-28 bg-gray-200 rounded animate-pulse"></div>
+                        </h3>
                         <p class="text-sm font-medium text-[var(--subtext)] mt-0.5">Total Expense</p>
                     </div>
                 </div>
@@ -43,12 +40,9 @@ $showEditProfile = true;
                         <img src="../asset/img/icons/revenue.png" alt="Total Revenue" class="w-12 h-12 object-contain">
                     </div>
                     <div>
-                        <?php
-                        $sale_stmt = $conn->prepare("SELECT SUM(total_amount) AS revenue FROM sales WHERE dealer_id = ?");
-                        $sale_stmt->bind_param("i", $dealer_id); $sale_stmt->execute();
-                        $sale_data = $sale_stmt->get_result()->fetch_assoc();
-                        ?>
-                        <h3 class="text-2xl font-bold text-[var(--text)]">₹ <?php echo number_format($sale_data['revenue'] ?? 0); ?></h3>
+                        <h3 id="dashRevenue" class="text-2xl font-bold text-[var(--text)]">
+                            <div class="h-7 w-28 bg-gray-200 rounded animate-pulse"></div>
+                        </h3>
                         <p class="text-sm font-medium text-[var(--subtext)] mt-0.5">Total Revenue</p>
                     </div>
                 </div>
@@ -61,12 +55,9 @@ $showEditProfile = true;
                         <img src="../asset/img/icons/sales.png" alt="Total Sales" class="w-12 h-12 object-contain">
                     </div>
                     <div>
-                        <?php
-                        $sale_stmt = $conn->prepare("SELECT COUNT(*) AS total_sales FROM sales s INNER JOIN sale_items si ON si.sale_id = s.id WHERE s.dealer_id = ?");
-                        $sale_stmt->bind_param("i", $dealer_id); $sale_stmt->execute();
-                        $sale_data = $sale_stmt->get_result()->fetch_assoc();
-                        ?>
-                        <h3 class="text-2xl font-bold text-[var(--text)]"><?php echo $sale_data['total_sales'] ?? 0; ?></h3>
+                        <h3 id="dashTotalSales" class="text-2xl font-bold text-[var(--text)]">
+                            <div class="h-7 w-16 bg-gray-200 rounded animate-pulse"></div>
+                        </h3>
                         <p class="text-sm font-medium text-[var(--subtext)] mt-0.5">Total Sales</p>
                     </div>
                 </div>
@@ -79,12 +70,9 @@ $showEditProfile = true;
                         <img src="../asset/img/icons/profit.png" alt="Total Profit" class="w-12 h-12 object-contain">
                     </div>
                     <div>
-                        <?php
-                        $sale_stmt = $conn->prepare("SELECT SUM(profit) AS total_profit FROM sales WHERE dealer_id = ?");
-                        $sale_stmt->bind_param("i", $dealer_id); $sale_stmt->execute();
-                        $sale_data = $sale_stmt->get_result()->fetch_assoc();
-                        ?>
-                        <h3 class="text-2xl font-bold text-[var(--text)]">₹ <?php echo number_format($sale_data['total_profit'] ?? 0); ?></h3>
+                        <h3 id="dashTotalProfit" class="text-2xl font-bold text-[var(--text)]">
+                            <div class="h-7 w-28 bg-gray-200 rounded animate-pulse"></div>
+                        </h3>
                         <p class="text-sm font-medium text-[var(--subtext)] mt-0.5">Total Profit</p>
                     </div>
                 </div>
@@ -111,25 +99,8 @@ $showEditProfile = true;
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Price</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-50">
-                            <?php
-                            $sale_stmt = $conn->prepare("SELECT p.product_name, p.current_stock, p.base_price, c.company_name FROM products p JOIN companies c ON p.company_id = c.id WHERE p.dealer_id = ? ORDER BY current_stock ASC LIMIT 5");
-                            $sale_stmt->bind_param("i", $dealer_id); $sale_stmt->execute();
-                            $sale_result = $sale_stmt->get_result();
-                            if ($sale_result->num_rows === 0): ?>
-                            <tr><td colspan="4" class="py-8 text-center text-sm text-[var(--subtext)]">No products found</td></tr>
-                            <?php else: while ($row = $sale_result->fetch_assoc()): ?>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-3 px-4 text-sm font-medium text-[var(--text)]"><?= htmlspecialchars($row['product_name']) ?></td>
-                                <td class="py-3 px-4 text-sm text-[var(--subtext)]"><?= htmlspecialchars($row['company_name']) ?></td>
-                                <td class="py-3 px-4">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold <?= $row['current_stock'] <= 5 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700' ?>">
-                                        <?= $row['current_stock'] ?>
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4 text-sm text-[var(--text)]">₹ <?= number_format($row['base_price']) ?></td>
-                            </tr>
-                            <?php endwhile; endif; ?>
+                        <tbody id="dashLeastStockBody">
+                            <tr><td colspan="4" class="py-8 text-center text-sm text-[var(--subtext)]"><i class="fas fa-spinner fa-spin mr-2"></i>Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -152,22 +123,8 @@ $showEditProfile = true;
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Date</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-50">
-                            <?php
-                            $purchase_stmt = $conn->prepare("SELECT c.company_name, p.product_name, pu.quantity, pu.total_price, po.order_date FROM purchase_orders po JOIN purchase_order_items pu ON po.id = pu.order_id JOIN products p ON pu.product_id = p.id JOIN companies c ON p.company_id = c.id WHERE po.dealer_id = ? ORDER BY po.order_date DESC LIMIT 5");
-                            $purchase_stmt->bind_param("i", $dealer_id); $purchase_stmt->execute();
-                            $purchase_result = $purchase_stmt->get_result();
-                            if ($purchase_result->num_rows === 0): ?>
-                            <tr><td colspan="5" class="py-8 text-center text-sm text-[var(--subtext)]">No purchases found</td></tr>
-                            <?php else: while ($row = $purchase_result->fetch_assoc()): ?>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-3 px-4 text-sm font-medium text-[var(--text)]"><?= htmlspecialchars($row['company_name']) ?></td>
-                                <td class="py-3 px-4 text-sm text-[var(--subtext)]"><?= htmlspecialchars($row['product_name']) ?></td>
-                                <td class="py-3 px-4 text-sm text-[var(--text)]"><?= $row['quantity'] ?></td>
-                                <td class="py-3 px-4 text-sm text-[var(--text)]">₹ <?= number_format($row['total_price']) ?></td>
-                                <td class="py-3 px-4 text-sm text-[var(--subtext)] whitespace-nowrap"><?= date('d M Y', strtotime($row['order_date'])) ?></td>
-                            </tr>
-                            <?php endwhile; endif; ?>
+                        <tbody id="dashRecentPurchasesBody">
+                            <tr><td colspan="5" class="py-8 text-center text-sm text-[var(--subtext)]"><i class="fas fa-spinner fa-spin mr-2"></i>Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -189,31 +146,8 @@ $showEditProfile = true;
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Qty Sold</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-50">
-                            <?php
-                            $purchase_stmt = $conn->prepare("SELECT p.product_name, c.company_name, SUM(si.quantity) AS total_qty_sold FROM sale_items si JOIN sales s ON si.sale_id = s.id JOIN products p ON si.product_id = p.id JOIN companies c ON p.company_id = c.id WHERE s.dealer_id = ? GROUP BY p.id, p.product_name, c.company_name ORDER BY total_qty_sold DESC LIMIT 5");
-                            $purchase_stmt->bind_param("i", $dealer_id); $purchase_stmt->execute();
-                            $purchase_result = $purchase_stmt->get_result();
-                            if ($purchase_result->num_rows === 0): ?>
-                            <tr><td colspan="4" class="py-8 text-center text-sm text-[var(--subtext)]">No sales data found</td></tr>
-                            <?php
-                            else:
-                                $rank = 1;
-                                while ($row = $purchase_result->fetch_assoc()):
-                                    $rankColors = ['bg-yellow-100 text-yellow-700','bg-gray-100 text-gray-600','bg-orange-100 text-orange-700'];
-                                    $rankColor  = $rankColors[$rank-1] ?? 'bg-gray-50 text-gray-500';
-                            ?>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-3 px-4">
-                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold <?= $rankColor ?>">
-                                        <?= $rank ?>
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4 text-sm font-medium text-[var(--text)]"><?= htmlspecialchars($row['company_name']) ?></td>
-                                <td class="py-3 px-4 text-sm text-[var(--subtext)]"><?= htmlspecialchars($row['product_name']) ?></td>
-                                <td class="py-3 px-4 text-sm font-semibold text-[var(--primary)]"><?= number_format($row['total_qty_sold']) ?></td>
-                            </tr>
-                            <?php $rank++; endwhile; endif; ?>
+                        <tbody id="dashBestSellersBody">
+                            <tr><td colspan="4" class="py-8 text-center text-sm text-[var(--subtext)]"><i class="fas fa-spinner fa-spin mr-2"></i>Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -235,25 +169,8 @@ $showEditProfile = true;
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wide">Qty</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-50">
-                            <?php
-                            $purchase_stmt = $conn->prepare("SELECT s.id AS sale_id, p.product_name, si.quantity, s.sale_date FROM sales s JOIN sale_items si ON si.sale_id = s.id JOIN products p ON si.product_id = p.id WHERE s.dealer_id = ? ORDER BY s.sale_date DESC LIMIT 5");
-                            $purchase_stmt->bind_param("i", $dealer_id); $purchase_stmt->execute();
-                            $purchase_result = $purchase_stmt->get_result();
-                            if ($purchase_result->num_rows === 0): ?>
-                            <tr><td colspan="4" class="py-8 text-center text-sm text-[var(--subtext)]">No recent sales found</td></tr>
-                            <?php else: while ($row = $purchase_result->fetch_assoc()): ?>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="py-3 px-4">
-                                    <span class="text-xs font-mono font-semibold text-[var(--primary)]">
-                                        BL<?= str_pad($row['sale_id'], 6, '0', STR_PAD_LEFT) ?>
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4 text-sm text-[var(--subtext)] whitespace-nowrap"><?= date('d M Y', strtotime($row['sale_date'])) ?></td>
-                                <td class="py-3 px-4 text-sm text-[var(--text)]"><?= htmlspecialchars($row['product_name']) ?></td>
-                                <td class="py-3 px-4 text-sm font-medium text-[var(--text)]"><?= $row['quantity'] ?></td>
-                            </tr>
-                            <?php endwhile; endif; ?>
+                        <tbody id="dashRecentSalesBody">
+                            <tr><td colspan="4" class="py-8 text-center text-sm text-[var(--subtext)]"><i class="fas fa-spinner fa-spin mr-2"></i>Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>

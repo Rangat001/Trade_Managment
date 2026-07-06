@@ -6,7 +6,7 @@ $activePage = 'sales';
 // Fetch products with category, grouped
 $products = [];
 $stmt = $conn->prepare("
-    SELECT id, product_name, selling_price, current_stock, category
+    SELECT id, product_name, selling_price, current_stock, category, image_path, base_price
     FROM products
     WHERE dealer_id = ?
     ORDER BY CASE WHEN (category IS NULL OR category = '') THEN 1 ELSE 0 END, category, product_name
@@ -90,6 +90,13 @@ $categories = array_keys($grouped);
     font-size: 1.4rem;
     color: var(--primary);
 }
+.prod-card .prod-img {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: var(--primary-light);
+    flex-shrink: 0;
+}
 .prod-card .prod-name {
     font-size: .78rem;
     font-weight: 600;
@@ -130,6 +137,19 @@ $categories = array_keys($grouped);
 .cart-row .cart-price {
     font-size: .75rem;
     color: var(--subtext);
+}
+.cart-price-input {
+    width: 60px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1px 4px;
+    font-size: .75rem;
+    color: var(--text);
+    text-align: right;
+}
+.cart-price-input:focus {
+    outline: none;
+    border-color: var(--primary);
 }
 .qty-btn {
     width: 28px; height: 28px;
@@ -530,15 +550,21 @@ $categories = array_keys($grouped);
 
 // All products from PHP — keyed by category
 var allGrouped = <?php
+    // image_path in the DB is already the full relative path, saved as:
+    //   $image_path = $uploadDir . $fileName;
+    // so it's used exactly as stored — no prefixing needed here.
     $js_grouped = [];
     foreach ($grouped as $cat => $catProducts) {
         $catLabel = ($cat === '__none__') ? 'No Category' : $cat;
         foreach ($catProducts as $p) {
+            $imagePath = trim($p['image_path'] ?? '');
             $js_grouped[$catLabel][] = [
                 'id'    => $p['id'],
                 'name'  => $p['product_name'],
                 'price' => (float)$p['selling_price'],
                 'stock' => (int)$p['current_stock'],
+                'base'  => (float)$p['base_price'],
+                'image' => $imagePath !== '' ? $imagePath : null,
             ];
         }
     }
@@ -659,18 +685,45 @@ function renderProductGrid(prods) {
             div.dataset.name  = p.name;
             div.dataset.price = p.price;
             div.dataset.stock = p.stock;
+            div.dataset.base  = p.base;
             if (!outOfStock) div.onclick = function () { addToCart(div); };
             div.title = p.name;
 
-            div.innerHTML =
-                '<div class="prod-icon ' + color + '">' + _esc(initial) + '</div>'
-              + '<div class="prod-name">' + _esc(p.name) + '</div>'
+            // ── Media: product image if available, else the letter avatar.
+            // The browser's own HTTP cache handles "load once from server,
+            // then from cache" automatically for repeated <img> requests to
+            // the same URL — no extra JS caching needed, as long as the
+            // server sends cache headers for the images folder (see the
+            // .htaccess note). If the file 404s (e.g. record exists but the
+            // file was deleted), onerror swaps it for the letter avatar.
+            var media;
+            if (p.image) {
+                media = document.createElement('img');
+                media.className = 'prod-img';
+                media.src = p.image;
+                media.alt = p.name;
+                media.loading = 'lazy';
+                media.onerror = function () {
+                    var fallback = document.createElement('div');
+                    fallback.className = 'prod-icon ' + color;
+                    fallback.textContent = initial;
+                    media.replaceWith(fallback);
+                };
+            } else {
+                media = document.createElement('div');
+                media.className = 'prod-icon ' + color;
+                media.textContent = initial;
+            }
+            div.appendChild(media);
+
+            div.insertAdjacentHTML('beforeend',
+                '<div class="prod-name">' + _esc(p.name) + '</div>'
               + '<div class="prod-price">₹' + p.price.toFixed(2) + '</div>'
               + '<div class="prod-stock">' + (outOfStock ? '<span class="text-red-500">Out of stock</span>' : 'Stock: ' + p.stock) + '</div>'
               + (outOfStock ? '' :
                   '<div id="badge-' + p.id + '" style="' + (inCartQty > 0 ? 'display:flex' : 'display:none') + '"'
                 + ' class="absolute top-2 right-2 w-5 h-5 rounded-full bg-[var(--primary)] text-white text-[10px] font-bold flex items-center justify-center">'
-                + (inCartQty > 0 ? inCartQty : '') + '</div>');
+                + (inCartQty > 0 ? inCartQty : '') + '</div>'));
 
             row.appendChild(div);
         });
@@ -753,9 +806,10 @@ function addToCart(cardEl) {
     var id    = cardEl.dataset.id;
     var name  = cardEl.dataset.name;
     var price = parseFloat(cardEl.dataset.price);
+    var base  = parseFloat(cardEl.dataset.base) || 0;
 
     if (cart[id]) { cart[id].qty++; }
-    else { cart[id] = { id: id, name: name, price: price, qty: 1 }; }
+    else { cart[id] = { id: id, name: name, price: price, base: base, qty: 1 }; }
 
     renderCart();
     cardEl.style.transform = 'scale(0.94)';
@@ -788,7 +842,7 @@ function renderCart() {
         row.innerHTML =
             '<div class="flex-1 min-w-0">'
           +   '<div class="cart-name truncate">' + _esc(item.name) + '</div>'
-          +   '<div class="cart-price">₹' + item.price.toFixed(2) + ' each</div>'
+          +   '<div class="cart-price">₹<input type="text" inputmode="decimal" class="cart-price-input" value="' + item.price.toFixed(2) + '" onclick="this.select()" onchange="updateCartPrice(\'' + id + '\', this.value)"> each</div>'
           + '</div>'
           + '<button type="button" class="qty-btn" onclick="changeQty(\'' + id + '\',-1)">−</button>'
           + '<span class="qty-display">' + item.qty + '</span>'
@@ -801,6 +855,32 @@ function renderCart() {
         updateBadge(id);
     });
 
+    recalcTotals();
+}
+
+/* -- Manual price override (never below base/cost price) -- */
+function updateCartPrice(id, rawValue) {
+    if (!cart[id]) return;
+    var newPrice = parseFloat(rawValue);
+
+    if (isNaN(newPrice) || newPrice <= 0) {
+        showToast('Enter a valid price.', 'error');
+        renderCart();
+        return;
+    }
+
+    if (cart[id].base && newPrice < cart[id].base) {
+        showToast('Price cannot be below cost price.', 'error');
+        renderCart();
+        return;
+    }
+
+    cart[id].price = newPrice;
+
+    var row = document.getElementById('cart-row-' + id);
+    if (row) {
+        row.querySelector('.cart-total').textContent = '\u20B9' + (cart[id].price * cart[id].qty).toFixed(2);
+    }
     recalcTotals();
 }
 

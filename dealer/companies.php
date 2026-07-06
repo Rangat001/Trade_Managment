@@ -30,12 +30,23 @@ $error   = $_SESSION['rgt_error_message']   ?? '';
             </button>
         </div>
 
+        <!-- Flash messages -->
+        <?php if (!empty($_SESSION['success'])): ?>
+        <script>document.addEventListener('DOMContentLoaded', function() { showToast('<?= addslashes($_SESSION['success']) ?>', 'success'); });</script>
+        <?php unset($_SESSION['success']); endif; ?>
+        <?php if (!empty($_SESSION['error'])): ?>
+        <script>document.addEventListener('DOMContentLoaded', function() { showToast('<?= addslashes($_SESSION['error']) ?>', 'error'); });</script>
+        <?php unset($_SESSION['error']); endif; ?>
+        <?php if (!empty($_SESSION['rgt_error_message'])): ?>
+        <script>document.addEventListener('DOMContentLoaded', function() { showToast('<?= addslashes($_SESSION['rgt_error_message']) ?>', 'error'); });</script>
+        <?php unset($_SESSION['rgt_error_message']); endif; ?>
+
         <!-- Companies Table -->
         <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden">
             <div class="p-6">
                 
                 <div class="table-responsive">
-                    <table class="table datanew w-full">
+                    <table id="companiesTable" class="table w-full">
                         <thead>
                             <tr class="bg-gray-50 border-b border-[var(--border)]">
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">No.</th>
@@ -48,67 +59,7 @@ $error   = $_SESSION['rgt_error_message']   ?? '';
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <?php
-                                $dealer_id = $_SESSION['rgt_logedin_user_dealer_id'];
-                                $result = mysqli_query($conn, "
-                                    SELECT 
-                                        c.*,
-                            
-                                        (
-                                            COALESCE((
-                                                SELECT SUM(ct.amount)
-                                                FROM company_transactions ct
-                                                WHERE ct.company_id = c.id
-                                                AND ct.dealer_id = $dealer_id
-                                                AND ct.type = 'DEBIT'
-                                            ), 0)
-                            
-                                            -
-                            
-                                            COALESCE((
-                                                SELECT SUM(poi.total_price)
-                                                FROM purchase_order_items poi
-                                                JOIN purchase_orders po ON po.id = poi.order_id
-                                                WHERE po.company_id = c.id
-                                                AND po.dealer_id = $dealer_id
-                                            ), 0)
-                                        ) AS balance
-                            
-                                    FROM companies c
-                                    WHERE c.dealer_id = $dealer_id
-                                ");
-
-                                while($row = mysqli_fetch_assoc($result)){
-                                    echo '<tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="py-4 px-6 text-sm font-medium text-gray-900">'.$row["id"].'</td>
-                                            <td class="py-4 px-6 text-sm text-gray-900">'.$row["dealer_id"].'</td>
-                                            <td class="py-4 px-6 text-sm text-gray-900">'.$row["company_name"].'</td>
-                                            <td class="py-4 px-6 text-sm text-gray-900">'.$row["contact_person"].'</td>
-                                            <td class="py-4 px-6 text-sm text-gray-900">'.$row["phone"].'</td>
-                                            <td class="py-4 px-6 text-sm text-gray-900">'.$row["email"].'</td>
-                                            <td class="py-4 px-6 text-sm font-medium">
-                                                <span class="'.($row["balance"] > 0 ? 'text-green-600' : ($row["balance"] < 0 ? 'text-red-600' : 'text-gray-900')).'">
-                                                    '.($row["balance"] > 0 ? '+' : ($row["balance"] < 0 ? '-' : '')).'₹'.number_format(abs($row["balance"]), 2).'
-                                                </span>
-                                            </td>
-                                            <td class="py-4 px-6">
-                                                <div class="flex items-center gap-2">
-                                                    <button onclick="openEditProductModal(
-                                                                        '.$row['id'].',
-                                                                        \''.addslashes(htmlspecialchars($row['company_name'], ENT_QUOTES)).'\',
-                                                                        \''.addslashes(htmlspecialchars($row['contact_person'], ENT_QUOTES)).'\',
-                                                                        \''.addslashes(htmlspecialchars($row['phone'], ENT_QUOTES)).'\',
-                                                                        \''.addslashes(htmlspecialchars($row['email'], ENT_QUOTES)).'\'
-                                                                    )" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                                                        <i class="fas fa-edit"></i> Edit
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>';
-                                }
-                            ?>
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
@@ -135,7 +86,7 @@ $error   = $_SESSION['rgt_error_message']   ?? '';
         </div>
         <?php endif; ?>
 
-        <form action="add_company.php" method="POST" class="p-6">
+        <form id="addCompanyForm" action="add_company.php" method="POST" class="p-6">
             <div class="space-y-5">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
@@ -193,7 +144,7 @@ $error   = $_SESSION['rgt_error_message']   ?? '';
         </div>
         <?php endif; ?>
 
-        <form action="edit_company.php" method="POST" class="p-6">
+        <form id="editCompanyForm" action="edit_company.php" method="POST" class="p-6">
             <input type="hidden" name="comp_id" value="">
 
             <div class="space-y-5">
@@ -233,34 +184,83 @@ $error   = $_SESSION['rgt_error_message']   ?? '';
 <?php require_once 'includes/footer.php'; ?>
 
 <script>
-    // Modal Functions
     function openAddProductModal() {
         document.getElementById('addProductModal').classList.remove('hidden');
     }
-
     function closeAddProductModal() {
         document.getElementById('addProductModal').classList.add('hidden');
     }
-
     function openEditProductModal(id, companyName, contactPerson, phone, email) {
         document.getElementById('editProductModal').classList.remove('hidden');
-        document.querySelector('input[name="comp_id"]').value = id;
-        document.querySelector('input[name="owner_name"]').value = contactPerson;
-        document.querySelector('input[name="owner_contact"]').value = phone;
-        document.querySelector('input[name="edit_email"]').value = email;
+        document.querySelector('input[name="comp_id"]').value         = id;
+        document.querySelector('input[name="owner_name"]').value      = contactPerson;
+        document.querySelector('input[name="owner_contact"]').value   = phone;
+        document.querySelector('input[name="edit_email"]').value      = email;
     }
-
     function closeEditProductModal() {
         document.getElementById('editProductModal').classList.add('hidden');
     }
-
-    // Close modals on outside click
     document.getElementById('addProductModal').addEventListener('click', function(e) {
         if (e.target === this) closeAddProductModal();
     });
-
     document.getElementById('editProductModal').addEventListener('click', function(e) {
         if (e.target === this) closeEditProductModal();
+    });
+
+    function _setSubmitting(btn, busy) {
+        btn.disabled = busy;
+        btn.textContent = busy ? 'Saving…' : btn.dataset.label;
+    }
+
+    // ── Add Company (async) ───────────────────────────────────────
+    document.getElementById('addCompanyForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn = this.querySelector('[type="submit"]');
+        btn.dataset.label = btn.textContent;
+        _setSubmitting(btn, true);
+        fetch('add_company.php', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: new FormData(this)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            _setSubmitting(btn, false);
+            if (res.success) {
+                showToast(res.message, 'success');
+                closeAddProductModal();
+                document.getElementById('addCompanyForm').reset();
+                jQuery('#companiesTable').DataTable().ajax.reload(null, false);
+            } else {
+                showToast(res.message || 'Failed to add company.', 'error');
+            }
+        })
+        .catch(function() { _setSubmitting(btn, false); showToast('Network error.', 'error'); });
+    });
+
+    // ── Edit Company (async) ──────────────────────────────────────
+    document.getElementById('editCompanyForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn = this.querySelector('[type="submit"]');
+        btn.dataset.label = btn.textContent;
+        _setSubmitting(btn, true);
+        fetch('edit_company.php', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: new FormData(this)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            _setSubmitting(btn, false);
+            if (res.success) {
+                showToast(res.message, 'success');
+                closeEditProductModal();
+                jQuery('#companiesTable').DataTable().ajax.reload(null, false);
+            } else {
+                showToast(res.message || 'Failed to update company.', 'error');
+            }
+        })
+        .catch(function() { _setSubmitting(btn, false); showToast('Network error.', 'error'); });
     });
 </script>
 </body>

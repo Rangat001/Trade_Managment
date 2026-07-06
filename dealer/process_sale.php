@@ -133,6 +133,13 @@ try {
 
         $base_price = $basePrices[$product_id];
 
+        if ($selling_price < $base_price) {
+            $conn->rollback();
+            $_SESSION['sale_error'] = "Selling price for product ID $product_id can't be below its base price (Rs " . number_format($base_price, 2) . ")";
+            header("Location: sales_entry.php");
+            exit;
+        }
+
         $line_total = $selling_price * $quantity;
         $profit     = ($selling_price - $base_price) * $quantity;
 

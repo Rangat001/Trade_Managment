@@ -25,88 +25,41 @@ $activePage = 'products';
             </button>
         </div>
 
+        <!-- Flash messages -->
+        <?php if (!empty($_SESSION['success'])): ?>
+        <script>document.addEventListener('DOMContentLoaded', function() { showToast('<?= addslashes($_SESSION['success']) ?>', 'success'); });</script>
+        <?php unset($_SESSION['success']); endif; ?>
+        <?php if (!empty($_SESSION['error'])): ?>
+        <script>document.addEventListener('DOMContentLoaded', function() { showToast('<?= addslashes($_SESSION['error']) ?>', 'error'); });</script>
+        <?php unset($_SESSION['error']); endif; ?>
+        <?php if (!empty($_SESSION['rgt_error_message'])): ?>
+        <script>document.addEventListener('DOMContentLoaded', function() { showToast('<?= addslashes($_SESSION['rgt_error_message']) ?>', 'error'); });</script>
+        <?php unset($_SESSION['rgt_error_message']); endif; ?>
+
         <!-- Products Table -->
         <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden">
             <div class="p-6">
         
                 <div class="overflow-x-auto">
-                    <table class="table datanew w-full min-w-[900px]">
+                    <table id="productsTable" class="w-full min-w-[900px]">
                         <thead>
                             <tr class="bg-gray-50 border-b border-[var(--border)]">
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">No.</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Product Name</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Category</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Company Name</th>
-                                
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Assurance</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Validity</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Base Price</th>
-                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">selling Price</th>
-                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">current stock</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Selling Price</th>
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Current Stock</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">HSN Code</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">GST (%)</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Barcode</th>
                                 <th class="text-left py-3 px-4 text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-[var(--border)]">
-                            <?php
-                                $products_query = "SELECT p.*, c.company_name 
-                                                  FROM products p 
-                                                  LEFT JOIN companies c ON p.company_id = c.id 
-                                                  WHERE p.dealer_id = {$_SESSION['rgt_logedin_user_dealer_id']}
-                                                  ORDER BY p.category, p.product_name";
-                                $result = mysqli_query($conn, $products_query);
-
-                                if(mysqli_num_rows($result) > 0){
-                                    while($row = mysqli_fetch_assoc($result)){
-                                        ?>
-                                        <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="py-4 px-6 text-sm font-medium text-gray-900"><?php echo $row['id']; ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo htmlspecialchars($row['product_name']); ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900">
-                                                <?php if (!empty($row['category'])): ?>
-                                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
-                                                    <?php echo htmlspecialchars($row['category']); ?>
-                                                </span>
-                                                <?php else: ?>
-                                                <span class="text-gray-400 text-xs">—</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['company_name']; ?></td>
-                                            
-                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['assurance'] ; ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['VALIDITY'] ; ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900">₹<?php echo number_format($row['base_price'], 2); ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900">₹<?php echo number_format($row['selling_price'], 2); ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['current_stock']; ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['HSN'] ; ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['GST'] ; ?></td>
-                                            <td class="py-4 px-6 text-sm text-gray-900"><?php echo $row['Barcode'] ; ?></td>
-                                            <td class="py-4 px-6">
-                                                <div class="flex items-center gap-2">
-                                                    <button onclick="openEditProductModal(<?php echo $row['id']; ?>, '<?php echo htmlspecialchars($row['product_name'], ENT_QUOTES); ?>', <?php echo $row['base_price']; ?>, <?php echo $row['selling_price']; ?>, <?php echo $row['current_stock']; ?>, '<?php echo htmlspecialchars($row['category'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($row['HSN'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($row['Barcode'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($row['GST'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($row['assurance'] ?? 'None', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($row['VALIDITY'] ?? '', ENT_QUOTES); ?>')" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                                                        <i class="fas fa-edit"></i> Edit
-                                                    </button>
-                                                    <button onclick="window.location.href='price_history.php?id=<?php echo $row['id']; ?>'" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-lg transition-colors">
-                                                        <i class="fas fa-chart-line"></i> Price History
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <?php
-                                    }
-                                } else {
-                                    ?>
-                                    <tr>
-                                        <td class="py-8 px-6 text-center text-gray-500">
-                                            No products found. Click "Add Product" to get started.
-                                        </td>
-                                    </tr>
-                                    <?php
-                                }
-                            ?>
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
@@ -125,7 +78,7 @@ $activePage = 'products';
             </button>
         </div>
 
-        <form action="add_product.php" method="POST" class="p-6">
+        <form id="addProductForm" action="add_product.php" method="POST" class="p-6" enctype="multipart/form-data">
             <div class="space-y-3">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
@@ -202,6 +155,14 @@ $activePage = 'products';
                     <input type="number" name="initial_quantity" min="0" value="0" disabled
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                 </div>
+
+                <div>
+                    <label>Product Image</label>
+                        <div>
+                            <input type="file" accept="image/jpeg, image/jpg" class="form-control"
+                                name="productImage" id="fileUpload" required>
+                        </div>
+                </div>
             </div>
 
             <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200">
@@ -228,7 +189,7 @@ $activePage = 'products';
             </button>
         </div>
 
-        <form action="edit_product.php" method="POST" class="p-6">
+        <form id="editProductForm" action="edit_product.php" method="POST" class="p-6"  enctype="multipart/form-data" >
             <input type="hidden" name="product_id" id="edit_product_id" value="">
 
             <div class="space-y-5">
@@ -313,6 +274,17 @@ $activePage = 'products';
                 </div>
             </div>
 
+            <div class="col-lg-6">
+                    <div class="form-group">
+                        <label>Current Image</label>
+                        <div>
+                            <input type="file" accept="image/jpeg, image/jpg, image/png" class="form-control" name="productImage" id="edit_fileUpload">
+                            <p style="color: red;">Current file: <strong id="edit_image_path_text">No image selected</strong></p>
+                        </div>
+                    </div>
+            </div>
+            
+
             <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200">
                 <button type="button" onclick="closeEditProductModal()"
                         class="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg transition-colors">
@@ -329,41 +301,106 @@ $activePage = 'products';
 
 <?php require_once 'includes/footer.php'; ?>
 <script>
-    // Modal Functions
+    // ── Modal helpers ────────────────────────────────────────────
     function openAddProductModal() {
         document.getElementById('addProductModal').classList.remove('hidden');
     }
-
     function closeAddProductModal() {
         document.getElementById('addProductModal').classList.add('hidden');
     }
 
-    function openEditProductModal(productId, productName, purchasePrice, sellingPrice, currentStock, category, hsn, barcode, gst, assurance, validity) {
-        document.getElementById('edit_product_id').value = productId;
-        document.getElementById('edit_product_name').value = productName;
-        document.getElementById('edit_purchase_price').value = purchasePrice;
-        document.getElementById('edit_selling_price').value = sellingPrice;
-        document.getElementById('edit_current_stock').value = currentStock;
-        document.getElementById('edit_category').value = category || '';
-        document.getElementById('edit_hsn').value = hsn || '';
-        document.getElementById('edit_barcode').value = barcode || '';
-        document.getElementById('edit_gst').value = gst || '';
-        document.getElementById('edit_assurance').value = assurance || 'None';
-        document.getElementById('edit_validity').value = validity || '';
+    function openEditProductModal(product) {
+        product = product || {};
+        document.getElementById('edit_product_id').value        = product.productId     != null ? product.productId     : '';
+        document.getElementById('edit_product_name').value      = product.productName   != null ? product.productName   : '';
+        document.getElementById('edit_purchase_price').value    = product.purchasePrice != null ? product.purchasePrice : '';
+        document.getElementById('edit_selling_price').value     = product.sellingPrice  != null ? product.sellingPrice  : '';
+        document.getElementById('edit_current_stock').value     = product.currentStock  != null ? product.currentStock  : '';
+        document.getElementById('edit_category').value          = product.category      != null ? product.category      : '';
+        document.getElementById('edit_hsn').value               = product.hsn           != null ? product.hsn           : '';
+        document.getElementById('edit_barcode').value           = product.barcode       != null ? product.barcode       : '';
+        document.getElementById('edit_gst').value               = product.gst           != null ? product.gst           : '';
+        document.getElementById('edit_assurance').value         = product.assurance     != null ? product.assurance     : 'None';
+        document.getElementById('edit_validity').value          = product.validity      != null ? product.validity      : '';
+        document.getElementById('edit_image_path_text').textContent = product.imagePath != null ? product.imagePath     : 'No image selected';
         document.getElementById('editProductModal').classList.remove('hidden');
     }
-
     function closeEditProductModal() {
         document.getElementById('editProductModal').classList.add('hidden');
     }
 
-    // Close modal on outside click
     document.getElementById('addProductModal').addEventListener('click', function(e) {
         if (e.target === this) closeAddProductModal();
     });
-
     document.getElementById('editProductModal').addEventListener('click', function(e) {
         if (e.target === this) closeEditProductModal();
+    });
+
+    // ── Helper: disable/re-enable submit button ───────────────────
+    function _setSubmitting(btn, busy) {
+        btn.disabled = busy;
+        btn.textContent = busy ? 'Saving…' : btn.dataset.label;
+    }
+
+    // ── Add Product (async) ───────────────────────────────────────
+    document.getElementById('addProductForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn = this.querySelector('[type="submit"]');
+        btn.dataset.label = btn.textContent;
+        _setSubmitting(btn, true);
+
+        var fd = new FormData(this);
+        fetch('add_product.php', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: fd
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            _setSubmitting(btn, false);
+            if (res.success) {
+                showToast(res.message, 'success');
+                closeAddProductModal();
+                document.getElementById('addProductForm').reset();
+                jQuery('#productsTable').DataTable().ajax.reload(null, false);
+            } else {
+                showToast(res.message || 'Failed to add product.', 'error');
+            }
+        })
+        .catch(function() {
+            _setSubmitting(btn, false);
+            showToast('Network error. Please try again.', 'error');
+        });
+    });
+
+    // ── Edit Product (async) ──────────────────────────────────────
+    document.getElementById('editProductForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn = this.querySelector('[type="submit"]');
+        btn.dataset.label = btn.textContent;
+        _setSubmitting(btn, true);
+
+        var fd = new FormData(this);
+        fetch('edit_product.php', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: fd
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            _setSubmitting(btn, false);
+            if (res.success) {
+                showToast(res.message, 'success');
+                closeEditProductModal();
+                jQuery('#productsTable').DataTable().ajax.reload(null, false);
+            } else {
+                showToast(res.message || 'Failed to update product.', 'error');
+            }
+        })
+        .catch(function() {
+            _setSubmitting(btn, false);
+            showToast('Network error. Please try again.', 'error');
+        });
     });
 </script>
 </body>

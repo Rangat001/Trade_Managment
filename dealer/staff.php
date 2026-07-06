@@ -2,12 +2,6 @@
 require_once 'includes/auth_check.php';
 $pageTitle  = 'Staff';
 $activePage = 'staff';
-
-// Fetch staff members
-$stmt = $conn->prepare("SELECT id, name, email, role, is_verified FROM users WHERE dealer_id = ? and is_active = 1");
-$stmt->bind_param("i", $dealer_id);
-$stmt->execute();
-$staff_result = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -43,7 +37,7 @@ $staff_result = $stmt->get_result();
         <!-- Staff Table -->
         <div class="bg-white rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full">
+                <table id="staffTable" class="w-full">
                     <thead>
                         <tr class="bg-gray-50 border-b border-[var(--border)]">
                             <th class="py-3 px-6 text-left text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Name</th>
@@ -52,36 +46,7 @@ $staff_result = $stmt->get_result();
                             <th class="py-3 px-6 text-left text-xs font-semibold text-[var(--subtext)] uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-[var(--border)]">
-                        <?php while ($staff = $staff_result->fetch_assoc()): ?>
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="py-4 px-6 text-sm font-medium text-[var(--text)]"><?php echo htmlspecialchars($staff['name']); ?></td>
-                            <td class="py-4 px-6 text-sm text-[var(--text)]"><?php echo htmlspecialchars($staff['email']); ?></td>
-                            <td class="py-4 px-6">
-                                <span class="inline-flex px-3 py-1 text-xs font-medium rounded-full <?php echo $staff['role'] === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'; ?>">
-                                    <?php echo $staff['role']; ?>
-                                </span>
-                            </td>
-                            <td class="py-4 px-6">
-                                <div class="flex items-center gap-2">
-                                    <button
-                                        data-id="<?= $staff['id'] ?>"
-                                        data-name="<?= htmlspecialchars($staff['name']) ?>"
-                                        data-email="<?= htmlspecialchars($staff['email']) ?>"
-                                        data-role="<?= htmlspecialchars($staff['role']) ?>"
-                                        onclick="openEditStaffModal(this)"
-                                        class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <button onclick="disableStaff(<?php echo $staff['id']; ?>)"
-                                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
-                                        <i class="fas fa-ban"></i> Disable
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endwhile; ?>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -99,7 +64,7 @@ $staff_result = $stmt->get_result();
             </button>
         </div>
 
-        <form action="add_staff.php" method="POST" class="p-6">
+        <form id="addStaffForm" action="add_staff.php" method="POST" class="p-6">
             <div class="space-y-5">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Name *</label>
@@ -195,7 +160,33 @@ $staff_result = $stmt->get_result();
 
 <?php require_once 'includes/footer.php'; ?>
 <script>
-    // ── Modal helpers ────────────────────────────────────────────
+    // ── Add Staff (async) ────────────────────────────────────────
+    document.getElementById('addStaffForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn = this.querySelector('[type="submit"]');
+        var label = btn.textContent;
+        btn.disabled = true; btn.textContent = 'Saving…';
+        fetch('add_staff.php', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: new FormData(this)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            btn.disabled = false; btn.textContent = label;
+            if (res.success) {
+                showToast(res.message, 'success');
+                closeAddStaffModal();
+                document.getElementById('addStaffForm').reset();
+                jQuery('#staffTable').DataTable().ajax.reload(null, false);
+            } else {
+                showToast(res.message || 'Failed to add staff.', 'error');
+            }
+        })
+        .catch(function() { btn.disabled = false; btn.textContent = label; showToast('Network error.', 'error'); });
+    });
+
+    // ── Modal helpers ─────────────────────────────────────────────
     function openAddStaffModal() {
         document.getElementById('addStaffModal').classList.remove('hidden');
     }

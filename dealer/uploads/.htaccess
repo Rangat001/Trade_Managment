@@ -1,0 +1,26 @@
+# Save this file as: uploads/products/.htaccess
+# (rename it — remove the "_htaccess.txt", the leading dot must be there)
+#
+# This tells the browser to keep product images in its cache for a long
+# time instead of re-asking the server on every page load. Without this,
+# most browsers re-validate images fairly often even though they "look"
+# cached.
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png  "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/gif  "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=31536000"
+</IfModule>
+
+# Note: if you ever replace an image but keep the SAME filename, browsers
+# that already cached it under this rule won't see the new version until
+# the cache expires. If you need images to update immediately after a
+# re-upload, save the new upload under a NEW filename (e.g. append a
+# timestamp) and update image_path in the database to match — don't
+# overwrite the old file in place.
